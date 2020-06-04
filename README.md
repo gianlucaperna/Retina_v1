@@ -7,15 +7,15 @@ La gestione dei pacchetti è fatta con Poetry.
 Per installare poetry seguire la guida al link: https://python-poetry.org/docs/#installation
 
 Clonare la direcotory git, posizionarsi all'interno con un terminale e eseguire:
-
-# > poetry install
-# > poetry shell (per abilitare il virtual env)
+'''
+poetry install
+poetry shell (per abilitare il virtual env)
 
 ..
 
-# > cd retina/Retina
-# > python Retina.py -h
-
+cd retina/Retina
+python Retina.py -h
+'''
 usage: Retina.py [-h] -d DIRECTORY [-j] [-js] [-p {static,dynamic}] [-v]
                  [-so {webex,jitsi,teams,skype}] [-s] [-q {LQ,MQ,HQ}]
                  [-log LOG_DIR] [-sp SPLIT] [-dp DROP] [-gl]
