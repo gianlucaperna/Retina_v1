@@ -16,7 +16,9 @@ poetry shell (per abilitare il virtual env)
 cd retina/Retina
 python Retina.py -h
 ```
-usage: Retina.py [-h] -d DIRECTORY [-j] [-js] [-p {static,dynamic}] [-v]
+## usage: 
+```
+Retina.py [-h] -d DIRECTORY [-j] [-js] [-p {static,dynamic}] [-v]
                  [-so {webex,jitsi,teams,skype}] [-s] [-q {LQ,MQ,HQ}]
                  [-log LOG_DIR] [-sp SPLIT] [-dp DROP] [-gl]
                  [-ta TIME_AGGREGATION [TIME_AGGREGATION ...]]
@@ -46,4 +48,4 @@ optional arguments:
   -gl, --general_log    general log for flows
   -ta TIME_AGGREGATION [TIME_AGGREGATION ...], --time_aggregation TIME_AGGREGATION [TIME_AGGREGATION ...]
                         time window aggregation
-
+```
