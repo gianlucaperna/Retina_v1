@@ -1,7 +1,7 @@
 # Retina
 Real-Time Analyzer
 
-Installazione:
+## Installazione:
 
 La gestione dei pacchetti è fatta con Poetry. 
 Per installare poetry seguire la guida al link: https://python-poetry.org/docs/#installation
@@ -16,7 +16,7 @@ poetry shell (per abilitare il virtual env)
 cd retina/Retina
 python Retina.py -h
 ```
-## usage: 
+## Usage: 
 ```
 Retina.py [-h] -d DIRECTORY [-j] [-js] [-p {static,dynamic}] [-v]
                  [-so {webex,jitsi,teams,skype}] [-s] [-q {LQ,MQ,HQ}]
