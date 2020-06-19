@@ -54,7 +54,7 @@ def drop_packet(data):
 if __name__ == "__main__":
 
     #Put your path to pcap here
-    source_pcap = r'C:\Users\Gianl\Desktop\Call_wih_log\Try_log_3p\3_p.pcapng'
+    source_pcap = r'C:\Users\Gianl\Desktop\ScreenSharing_Test_fps\WM\Video\Video_Game.pcapng'
 
     used_port = pcap_to_port(source_pcap)
     info = (source_pcap, used_port)
@@ -156,3 +156,17 @@ if __name__ == "__main__":
 #         for key in dict_merge.keys():
 #             if key[5] in PT_FEC:
 #                 dict_merge[key]["label"] = "Fec"
+
+
+#MARKER RTP CODE FPS:
+    
+#sum(dict_flow_data[('0xcdc28618', '192.168.1.105', '150.253.227.38', 49356, 9000, 96)]["rtp_timestamp"].value_counts())       
+#sum(dict_flow_data[('0xcdc28618', '192.168.1.105', '150.253.227.38', 49356, 9000, 96)]["rtp_marker"].value_counts())
+#SCEGLI UN DICT CON PACCHETTI VIDEO DA DICT_FLOW_DATA
+df_prova = dict_flow_data[('0x67f1a27c', '192.168.1.105', '170.133.163.164', 51939, 5004, 118)]    
+
+ 
+# df_prova["timestamps"] = pd.to_datetime(df_prova["timestamps"], unit = 's')
+# df_prova.set_index('timestamps', inplace = True)
+# df_prova = df_prova.dropna()
+# df_prova2 = df_prova.resample(f"s").agg({"rtp_marker" : [sum]})

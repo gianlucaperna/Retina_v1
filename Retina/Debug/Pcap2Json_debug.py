@@ -40,7 +40,7 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
     command = ['tshark', '-r', source_pcap, '-l', '-n', '-T', 'ek']
     for port in used_port:
         command.append("-d udp.port==" + str(port) + ",rtp")
-    with open(os.path.join(pcap_path, name+".txt") ,"w+",encoding = 'utf-8') as file:
+    with open(os.path.join(pcap_path, name+".txt") ,"w+",encoding = 'utf-8',  errors="ignore") as file:
         subprocess.Popen(command,stdout = file, stderr = None ,encoding = 'utf-8').communicate()
     with open(os.path.join(pcap_path, name+".txt") ,"r", errors="ignore") as file:
         output = file.read()

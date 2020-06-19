@@ -70,7 +70,7 @@ def json_to_list(output, json_path, duration_drop, json_file = False):
             file = open(json_path, "w", encoding = "utf-8")
             file.write("[")
             flag=False
-        with open(output, "r") as file_output: #apro file output tshark
+        with open(output, "r", encoding="utf-8", errors='ignore') as file_output: #apro file output tshark
             for obj in file_output: #leggo una riga, che corrisponde ad un oggetto str di json
                 try:
                     obj = json.loads(obj) #converto la stringa in dizionario

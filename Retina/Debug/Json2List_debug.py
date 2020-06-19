@@ -36,13 +36,17 @@ def json_to_list(output, json_path):
             rtp_timestamp = int(obj['layers']['rtp']['rtp_rtp_timestamp'])
             rtp_seq_num = int(obj['layers']['rtp']['rtp_rtp_seq'])
             try:
+                rtp_marker = int(obj['layers']['rtp']['rtp_rtp_marker'])
+            except:
+                rtp_marker = -1
+            try:
                 rtp_csrc = obj['layers']['rtp']['rtp_csrc_items_rtp_csrc_item']
             except:
                 rtp_csrc = "fec"
             # Add new packet to dictionary
     #        columns = ['frame_num', 'p_type', 'len_udp', 'len_ip', 'len_frame', 'timestamps', 'rtp_timestamp', 'rtp_seq_num']
             data = [frame_num, p_type, len_udp, len_ip, len_frame,
-                    timestamp, rtp_timestamp, rtp_seq_num, rtp_csrc]
+                    timestamp, rtp_timestamp, rtp_seq_num, rtp_csrc, rtp_marker]
 
             if unique_tuple in dictionary:
                 dictionary[unique_tuple].append(data)
@@ -150,7 +154,8 @@ def json_to_list(output, json_path):
                 continue
 
         for x in unique_flow:
-            columns = ['frame_num', 'p_type', 'len_udp', 'len_ip', 'len_frame', 'timestamps', 'rtp_timestamp', 'rtp_seq_num', 'rtp_csrc']
+            columns = ['frame_num', 'p_type', 'len_udp', 'len_ip', 'len_frame', 'timestamps', 'rtp_timestamp', 'rtp_seq_num', 'rtp_csrc',\
+                       'rtp_marker']
             df = pd.DataFrame(dict_data[x], columns=columns)
             if (max(df["timestamps"]) - min(df["timestamps"])) > 10:
                 dict_flow_data[x] = df
