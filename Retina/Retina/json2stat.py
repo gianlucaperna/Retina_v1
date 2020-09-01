@@ -5,10 +5,10 @@ import datetime
 import os
 import traceback
 import sys
-from MeetData import WebexDataset, JitsiDataset, ZoomDataset
+from MeetData import WebexDataset, JitsiDataset, ZoomDataset, OtherDataset
 import glob
 from functools import reduce
-def json2stat (dict_flow_data, pcap_path, name, time_aggregation, screen = None, quality = None, software = None, file_log = None):
+def json2stat (dict_flow_data, pcap_path, name, time_aggregation, screen = None, quality = None, software = None, file_log = None, label=None):
     try:
         if file_log: #file log potrebbe essere una directory padre in cui cercare
             file_log = glob.glob(reduce(os.path.join, [file_log, "**", name+".log"]), recursive=True) #lista che contiene in teoria solo la dir+name.log
@@ -26,6 +26,8 @@ def json2stat (dict_flow_data, pcap_path, name, time_aggregation, screen = None,
             dataset_dropped = JitsiDataset(dict_flow_data, pcap_path, name, screen, quality, software, file_log, time_aggregation)
         elif (software == "zoom"):
             dataset_dropped = ZoomDataset(dict_flow_data, pcap_path, name, screen, quality, software, file_log, time_aggregation)
+        elif (software == "other"):
+            dataset_dropped = OtherDataset(dict_flow_data, pcap_path, name, label, time_aggregation)
         else:
             pass
         if software:

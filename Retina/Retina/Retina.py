@@ -70,7 +70,7 @@ if __name__ == "__main__":
     parser.add_argument ("-p", "--plot", help = "Plot info" , choices=['static', 'dynamic'], default=None, type=str.lower)
     parser.add_argument ("-v", "--verbose", help = "verbosity output (txt, .json)" , action='store_true'\
 	                    ,default = False)
-    parser.add_argument ("-so", "--software", help = "Webex, Skype, M.Teams", choices=['webex', 'jitsi', 'teams', 'skype'], \
+    parser.add_argument ("-so", "--software", help = "Webex, Skype, M.Teams", choices=['webex', 'jitsi', 'teams', 'skype', 'other'], \
                         default = None, type = str.lower)
     parser.add_argument ("-s", "--screen", help = "Set True if in capture there is only video screen sharing", \
 						action = 'store_true', default = None)
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     parser.add_argument ("-dp", "--drop", help = "Time drop", type=int, default = 10)
     parser.add_argument ("-gl", "--general_log", help = "general log for flows", action='store_true', default = False)
     parser.add_argument ("-ta", "--time_aggregation", help = "time window aggregation", nargs='+', type=int, default=[1])
-
+    parser.add_argument ("-l", "--label", help = "Webex, Skype, M.Teams", default = None, type = str.lower)
 
     #aggiungere parametro per tempo aggregazione
 
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     #Decodifico su porta e creo .csv
     pool= multiprocessing.Pool(processes = n_process, maxtasksperchild=1,) #Limito il numero di processi ai core della cpu -1
     pool_tuple = [(x["pcap"], x["port"], args.screen, args.quality, args.plot, args.json, args.software, args.log_dir, \
-                  args.drop, path_general_log, args.time_aggregation) for x in result_list]  #result_list, args.plot
+                  args.drop, path_general_log, args.time_aggregation, args.label) for x in result_list]  #result_list, args.plot
     pool.imap_unordered(pcap_to_json, pool_tuple, chunksize=1)
     pool.close()
     pool.join()

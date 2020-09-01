@@ -51,6 +51,7 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
         time_drop = tuple_param[8] # durata in secondi minima che deve avere un flusso
         general_log = tuple_param[9] #se c'è contiene il path dove salvare il file, altrimenti False
         time_aggregation = tuple_param[10]
+        label = tuple_param[11]
         name = os.path.basename(source_pcap).split(".")[0] # nome del pcap senza estensione
         pcap_path = os.path.dirname(source_pcap) # percorso pcap senza file
         json_path = os.path.join(pcap_path,name+".json")
@@ -73,7 +74,7 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
                     general_df.to_csv(os.path.join(general_log,name+"_gl.csv"))
         # dict list etc sono passate by reference, attenzione!!
         for time_agg in time_aggregation:
-            dataset_dropped = json2stat(copy.deepcopy(dict_flow_data), pcap_path, name, time_agg, screen = screen, quality = quality, software = software, file_log = file_log)
+            dataset_dropped = json2stat(copy.deepcopy(dict_flow_data), pcap_path, name, time_agg, screen = screen, quality = quality, software = software, file_log = file_log, label=label)
         if plot == "static":
             plot_path = os.path.join(pcap_path,name)
             plot_stuff_static(plot_path, dict_flow_data, df_unique_flow)

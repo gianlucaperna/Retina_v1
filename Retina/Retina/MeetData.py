@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from Label import labelling
 from Label import labelling2
+from Label import etichetto_name
 from InterStatistics import inter_statistic
 from SeriesStats import *
 from LogWebexManager import *
@@ -18,6 +19,42 @@ def moment3(series):
     return moment(series, moment=3)
 def moment4(series):
     return moment(series, moment=4)
+
+
+def OtherDataset(dict_flow_data, pcap_path, name, label, time_aggregation):
+    try:
+        df_train = pd.DataFrame()
+        LEN_DROP = 0
+        dict_flow_data, LEN_DROP = inter_statistic (dict_flow_data, LEN_DROP)
+        percentili = [p10, p20, p25, p30, p40, p50, p60, p70, p75, p80, p90, p95, max_min_R, kurtosis, skew,\
+            moment3, moment4, len_unique_percent, max_value_count_percent, min_max_R]
+        dict_flow_data = etichetto_name(dict_flow_data,label)
+        df_train = pd.DataFrame()
+        for flow_id in dict_flow_data.keys():
+            dict_flow_data[flow_id]["timestamps"] = pd.to_datetime(dict_flow_data[flow_id]["timestamps"], unit = 's')
+            dict_flow_data[flow_id].set_index('timestamps', inplace = True)
+            dict_flow_data[flow_id] = dict_flow_data[flow_id].dropna()
+            train = dict_flow_data[flow_id].resample(f"{time_aggregation}s").agg({\
+                'interarrival' : ['std', 'mean', max_min_diff]+percentili, \
+                'len_udp' : ['std', 'mean', 'count', kbps, max_min_diff]+percentili, \
+                'interlength_udp' : ['std', 'mean', max_min_diff]+percentili,\
+                'rtp_interarrival' : ['std', 'mean', zeroes_count, max_min_diff]+percentili ,\
+                "inter_time_sequence": ['std', 'mean', max_min_diff]+percentili ,\
+                "label": [value_label],  "label2": [value_label]\
+                                                                })
+            train["flow"] = str(flow_id)
+            train["pcap"] = str(name)
+            df_train = pd.concat([df_train, train])
+            dataset_dropped = df_train.dropna()
+            dataset_dropped.reset_index(inplace = True, drop = True)
+        new_header = []
+        for h in dataset_dropped.columns:
+            new_header.append(h[0] + "_" + h[1])
+        #   dataset_dropped.columns = dataset_dropped.columns.droplevel()
+        dataset_dropped.columns = new_header
+        return dataset_dropped
+    except:
+        pass
 
 
 def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, file_log, time_aggregation):

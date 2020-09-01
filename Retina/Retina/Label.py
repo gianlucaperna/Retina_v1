@@ -3,6 +3,18 @@ import pandas as pd
 #ETICHETTATURA NOSTRA
 
 
+def etichetto_name(dict_flow_data, label):
+    #serve per etichettare mettendo il nome del software
+    for flow_id in dict_flow_data.keys():
+        if dict_flow_data[flow_id]["len_udp"].mean() < 300:
+            dict_flow_data[flow_id]["label"] = 0
+        else:
+            dict_flow_data[flow_id]["label"] = 1
+        dict_flow_data[flow_id]["label2"] = label
+    return dict_flow_data
+
+
+
 def audio_vs_fec_vs_ss(dict_flow_data, flow_id):
     if (dict_flow_data[flow_id]["rtp_timestamp"] == 0).all():
         dict_flow_data[flow_id]["label"] =  4#FEC audio
