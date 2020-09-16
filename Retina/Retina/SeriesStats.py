@@ -8,6 +8,12 @@ import numpy as np
 import pandas as pd
 
 
+def sum_check(series):
+    if -1 in series:
+        return -1
+    else:
+        return series.sum()
+
 def kbps(series):
     return series.sum()*8/1024
 
