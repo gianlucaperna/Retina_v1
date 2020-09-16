@@ -54,7 +54,7 @@ def drop_packet(data):
 if __name__ == "__main__":
 
     #Put your path to pcap here
-    source_pcap = r'C:\Users\Gianl\Desktop\ScreenSharing_Test_fps\WM\Video\Video_Game.pcapng'
+    source_pcap = r'C:\Users\Gianl\Desktop\SS_flag_opt\SS_flag_opt.pcapng'
 
     used_port = pcap_to_port(source_pcap)
     info = (source_pcap, used_port)
