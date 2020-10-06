@@ -139,12 +139,3 @@ if __name__ == "__main__":
     if (args.join):
         for time_agg in args.time_aggregation:
     	    merge_csv(directory_p, time_agg)
-    if not (args.verbose):
-    	#txtpath = [os.path.join(dp, f) for dp, dn, filenames in os.walk(args.directory) for f in filenames if os.path.splitext(f)[1] == '.txt']
-    	for i in pcap_app:
-    		#cancello i txt, pcap_app contiene il percorso di tutti i file .pcap, quindi bisogna cambiare
-    		#l'estensione finale. Prima provo a sostituire .pcapng, se, il file è pcap, nel secondo caso
-    		#sostituisce. L'ordine è importante altrimenti esce .txtng
-    		i = i.replace(".pcapng",".txt")
-    		i = i.replace(".pcap", ".txt")
-    		os.remove(i)
