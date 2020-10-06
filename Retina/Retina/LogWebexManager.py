@@ -66,7 +66,7 @@ def make_d_log(log, dict_flow_data, loss_rate=0.2):
         d_log = {}
 
         for key in dict_flow_data.keys():
-            ssrc = key[4]
+            ssrc = key[0]
             inner = {k:[] for k in ["time", "ssrc_hex", "ssrc_dec", "label", "quality", "fps", "jitter"]}
 
             for line in log:

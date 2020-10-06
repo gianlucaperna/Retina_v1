@@ -70,7 +70,6 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
         del(r)
         name_col = rr.pop(0)
         df = pd.DataFrame(rr, columns=name_col)
-
         df = df.astype({'frame.time_epoch': 'float64', 'frame.number' : "int32", 'udp.length' : "int32", 'rtp.p_type' : "int32",
                    'rtp.timestamp' : np.int64, "udp.srcport" : "int32",
                    "udp.dstport" : "int32", 'rtp.marker' : "int32", 'rtp.seq' : "int32",
@@ -90,13 +89,13 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
             'rtp.marker' : 'rtp_marker',
              'rtp.csrc.item' : 'rtp_csrc'
                 })
-        columns = ["ip_src", "ip_dst", "prt_src", "prt_dst", "ssrc", "p_type"]
+        df["rtp_csrc"].replace('',"fec", inplace=True)
+        columns = ["ssrc", "ip_src", "ip_dst", "prt_src", "prt_dst" , "p_type"]
         gb= df.groupby(columns)
         dict_flow_data = {x : gb.get_group(x) for x in gb.groups if x is not None and np.max(gb.get_group(x)["timestamps"]) - np.min(gb.get_group(x)["timestamps"])>time_drop}
         df_unique_flow = pd.DataFrame(columns = columns)
         for key in dict_flow_data.keys():
             df_unique_flow=df_unique_flow.append(pd.Series(key, index=columns), ignore_index=True)
-
         if general_log: #genera log simile a tstat
             general_dict_info = {}
             for flow_id in dict_flow_data:

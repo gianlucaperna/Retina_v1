@@ -112,25 +112,28 @@ def check_fec_equal_90(dict_flow_data, flow_id):
 
 def labelling2 (dict_flow_data, screen = None, quality = None):
     for flow_id in dict_flow_data:
-        if not (any(dict_flow_data[flow_id]["rtp_csrc"].isin(["fec"]))):
-            dict_flow_data[flow_id]["rtp_csrc"] = [ str( bin(int(x, 16))[2:] ) for x in dict_flow_data[flow_id]["rtp_csrc"] ]
-            if (dict_flow_data[flow_id]["rtp_timestamp"] == 0).all(): #FEC Inviati
-                dict_flow_data[flow_id] = fec_audio_video_csrc(dict_flow_data, flow_id)
-                #print("L2_FEC_rtp_0: {}".format(flow_id))
-            elif check_fec_equal(dict_flow_data,flow_id):
-                dict_flow_data[flow_id] = fec_audio_video_csrc(dict_flow_data, flow_id)
-                #print("L2_FEC_same: {}".format(flow_id))
-            elif check_fec_equal_90(dict_flow_data,flow_id):
-                try:
+        try:
+            if not (any(dict_flow_data[flow_id]["rtp_csrc"].isin(["fec"]))):
+                dict_flow_data[flow_id]["rtp_csrc"] = [ str( bin(int(x, 16))[2:] ) for x in dict_flow_data[flow_id]["rtp_csrc"] ]
+                if (dict_flow_data[flow_id]["rtp_timestamp"] == 0).all(): #FEC Inviati
                     dict_flow_data[flow_id] = fec_audio_video_csrc(dict_flow_data, flow_id)
-                except:
-                    dict_flow_data[flow_id] = fec_audio_video_euristic(dict_flow_data, flow_id)
-            else:
-                dict_flow_data[flow_id]["label2"] = [ 1 if x[-1] == str(1) else 0 for x in dict_flow_data[flow_id]["rtp_csrc"] ]
-                #print("L2_class: {}".format(flow_id))
-        else: #se compare una voce fec etichetta euristica
-            dict_flow_data[flow_id] = fec_audio_video_euristic(dict_flow_data, flow_id)
-            #print("L2_FEC_EUR: {}".format(flow_id))
+                    #print("L2_FEC_rtp_0: {}".format(flow_id))
+                elif check_fec_equal(dict_flow_data,flow_id):
+                    dict_flow_data[flow_id] = fec_audio_video_csrc(dict_flow_data, flow_id)
+                    #print("L2_FEC_same: {}".format(flow_id))
+                elif check_fec_equal_90(dict_flow_data,flow_id):
+                    try:
+                        dict_flow_data[flow_id] = fec_audio_video_csrc(dict_flow_data, flow_id)
+                    except:
+                        dict_flow_data[flow_id] = fec_audio_video_euristic(dict_flow_data, flow_id)
+                else:
+                    dict_flow_data[flow_id]["label2"] = [ 1 if x[-1] == str(1) else 0 for x in dict_flow_data[flow_id]["rtp_csrc"] ]
+                    #print("L2_class: {}".format(flow_id))
+            else: #se compare una voce fec etichetta euristica
+                dict_flow_data[flow_id] = fec_audio_video_euristic(dict_flow_data, flow_id)
+                #print("L2_FEC_EUR: {}".format(flow_id))
+        except Exception as e:
+            print(e)
     return dict_flow_data
 
 
