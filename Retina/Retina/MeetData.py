@@ -57,7 +57,7 @@ def OtherDataset(dict_flow_data, pcap_path, name, label, time_aggregation):
         pass
 
 
-def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, file_log, time_aggregation):
+def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, file_log, time_aggregation, loss_rate=0.2):
     try:
         df_train = pd.DataFrame()
         LEN_DROP = 0
@@ -92,7 +92,7 @@ def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, fi
             #Crea d_log - {key come in dict_flow_data : Dataframe con dati dal log}
             #ha i dati di dal log per ogni flusso non-FEC
             #per i flussi FEC ha empty DataFrame
-            d_log = make_d_log(log, dict_flow_data)
+            d_log = make_d_log(log, dict_flow_data, loss_rate=loss_rate)
             #Merge dei dati del log e dict_flow_data_2
             dict_merge, flows_not_in_log = DictMerge(dict_flow_data_2, d_log, fec_dict)
             #Per rendere il codice operabile con json2stat

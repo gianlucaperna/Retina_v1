@@ -66,10 +66,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "RTP flow analyzer")
     parser.add_argument ("-d", "--directory", help = "Master directory", required = True)
     parser.add_argument ("-j", "--join", help = "Join all .csv" , action='store_true')
-    parser.add_argument ("-js", "--json", help = "Create Json of the pcap" , action='store_true', default = False)
     parser.add_argument ("-p", "--plot", help = "Plot info" , choices=['static', 'dynamic'], default=None, type=str.lower)
-    parser.add_argument ("-v", "--verbose", help = "verbosity output (txt, .json)" , action='store_true'\
-	                    ,default = False)
     parser.add_argument ("-so", "--software", help = "Webex, Skype, M.Teams", choices=['webex', 'jitsi', 'teams', 'skype', 'other'], \
                         default = None, type = str.lower)
     parser.add_argument ("-s", "--screen", help = "Set True if in capture there is only video screen sharing", \
@@ -79,11 +76,13 @@ if __name__ == "__main__":
     parser.add_argument ("-log", "--log_dir", help = "Directory logs file", default = None)
     parser.add_argument ("-sp", "--split", help = "Set to divide pcap", type=int\
 						,default = None)
-    parser.add_argument ("-dp", "--drop", help = "Time drop", type=int, default = 10)
-    parser.add_argument ("-gl", "--general_log", help = "general log for flows", action='store_true', default = False)
+    parser.add_argument ("-dp", "--drop", help = "Minimum length in time of the flow", type=int, default = 10)
+    parser.add_argument ("-gl", "--general_log", help = "General log for flows, like Tstat", action='store_true', default = False)
     parser.add_argument ("-ta", "--time_aggregation", help = "time window aggregation", nargs='+', type=int, default=[1])
     parser.add_argument ("-l", "--label", help = "Webex, Skype, M.Teams", default = None, type = str.lower)
     parser.add_argument ("-po", "--port", help = "Add RTP port", nargs='+', type=int, default=[])
+    parser.add_argument ("-lr", "--loss_rate", help = "Set to drop flow with geq loss_rate (default 0.2)", type=float\
+						,default = 0.2)
     #aggiungere parametro per tempo aggregazione
 
     args = parser.parse_args()
@@ -129,7 +128,7 @@ if __name__ == "__main__":
 
     #Decodifico su porta e creo .csv
     pool= multiprocessing.Pool(processes = n_process, maxtasksperchild=1,) #Limito il numero di processi ai core della cpu -1
-    pool_tuple = [(x["pcap"], x["port"]+args.port, args.screen, args.quality, args.plot, args.json, args.software, args.log_dir, \
+    pool_tuple = [(x["pcap"], x["port"]+args.port, args.screen, args.quality, args.plot, args.loss_rate, args.software, args.log_dir, \
                   args.drop, path_general_log, args.time_aggregation, args.label) for x in result_list]  #result_list, args.plot
     pool.imap_unordered(pcap_to_json, pool_tuple, chunksize=1)
     pool.close()

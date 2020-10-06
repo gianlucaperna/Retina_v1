@@ -8,7 +8,7 @@ import sys
 from MeetData import WebexDataset, JitsiDataset, ZoomDataset, OtherDataset
 import glob
 from functools import reduce
-def json2stat (dict_flow_data, pcap_path, name, time_aggregation, screen = None, quality = None, software = None, file_log = None, label=None):
+def json2stat (dict_flow_data, pcap_path, name, time_aggregation, screen = None, quality = None, software = None, file_log = None, label=None, loss_rate=0.2):
     try:
         if file_log: #file log potrebbe essere una directory padre in cui cercare
             file_log = glob.glob(reduce(os.path.join, [file_log, "**", name+".log"]), recursive=True) #lista che contiene in teoria solo la dir+name.log
@@ -21,7 +21,7 @@ def json2stat (dict_flow_data, pcap_path, name, time_aggregation, screen = None,
             print(f"Nessun file di log trovato per {name}.pcap")
         #print ("Sono Dentro")
         if (software == "webex"):
-            dataset_dropped = WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, file_log, time_aggregation)
+            dataset_dropped = WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, file_log, time_aggregation, loss_rate=loss_rate)
         elif (software == "jitsi"):
             dataset_dropped = JitsiDataset(dict_flow_data, pcap_path, name, screen, quality, software, file_log, time_aggregation)
         elif (software == "zoom"):

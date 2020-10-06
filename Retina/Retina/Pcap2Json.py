@@ -44,7 +44,7 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
         screen = tuple_param[2] # old per webex, tutti i flussi video sono etichettati come SS
         quality = tuple_param[3] #old per webex, specifica qualità flussi video, (devono essere tutti uguali)
         plot = tuple_param[4] # se True crea Plot
-        json_file = tuple_param[5] #salvare su file json tutti i pacchetti rtp della cattura
+        loss_rate = tuple_param[5] #
         software = tuple_param[6] # webex jitsi ..
         file_log = tuple_param[7] #directory padre dei file .log
         time_drop = tuple_param[8] # durata in secondi minima che deve avere un flusso
@@ -58,8 +58,8 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
         for port in used_port:
             port_add.append("-d udp.port==" + str(port) + ",rtp")
 
-        command = f"""tshark -r {file} -Y {filtro} \
-                     -T fields {" ".join(portee)} -E separator=? -E header=y -e frame.time_epoch -e frame.number -e \
+        command = f"""tshark -r {source_pcap} -Y {filtro} \
+                     -T fields {" ".join(port_add)} -E separator=? -E header=y -e frame.time_epoch -e frame.number -e \
                      ip.src -e ip.dst -e udp.srcport \
                      -e udp.dstport  -e udp.length  -e rtp.p_type -e rtp.ssrc -e rtp.timestamp \
                      -e rtp.seq  -e rtp.marker -e rtp.csrc.item """
@@ -107,7 +107,7 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
                     general_df.to_csv(os.path.join(general_log,name+"_gl.csv"))
         # dict list etc sono passate by reference, attenzione!!
         for time_agg in time_aggregation:
-            dataset_dropped = json2stat(copy.deepcopy(dict_flow_data), pcap_path, name, time_agg, screen = screen, quality = quality, software = software, file_log = file_log, label=label)
+            dataset_dropped = json2stat(copy.deepcopy(dict_flow_data), pcap_path, name, time_agg, screen = screen, quality = quality, software = software, file_log = file_log, label=label, loss_rate=loss_rate)
         if plot == "static":
             plot_path = os.path.join(pcap_path,name)
             plot_stuff_static(plot_path, dict_flow_data, df_unique_flow)

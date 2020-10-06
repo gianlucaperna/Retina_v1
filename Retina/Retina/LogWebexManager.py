@@ -61,30 +61,34 @@ def make_fec_dict(log, dict_flow_data):
 
 
 
-def make_d_log(log, dict_flow_data):
+def make_d_log(log, dict_flow_data, loss_rate=0.2):
     try:
         d_log = {}
 
         for key in dict_flow_data.keys():
-            ssrc = key[0]
+            ssrc = key[4]
             inner = {k:[] for k in ["time", "ssrc_hex", "ssrc_dec", "label", "quality", "fps", "jitter"]}
 
             for line in log:
                 #2020-04-20T14:01:59.342Z <Info> [9968] WME:0 :[SQ] [SQ] INFO: SQAudioTX - vid=0 csi=843778816 did=0 ssrc=1613872330 loss=0.000 drop=0.000 jitter=0 bytes=201518 rtp=1306 failed=0 bitrate=65016 rtt=33 bw=176000 inputRate=48552 errcnt=0 dtmf=0 codecType=4 encodeDropMs=0 rrWin=0 br=61400 type=UDP rtcp=156 cFecOn=0 fecBw=88000 fecBitRate=91392 fecPkt=1305 mari_loss=0.000 mari_qdelay=12 mari_rtt=47 mari_recvrate=130112 nbr=65016 cid__783311041
                 substring = "ssrc=" + str(int(ssrc, 16)) #converto ssrc hex in dec
                 if (substring in line) and ("[SQ]" in line):
-                    label = re.findall(r"INFO: ([a-zA-Z]+)", line) #SQAudioTX
-                    quality = re.findall(r"w*h=([0-9]+x[0-9]+)", line) #1280x720
-                    fps = re.findall(r" fps=([0-9]+)", line) #15
-                    jitter = re.findall(r" jitter=([0-9]+)", line) #0
+                    loss = re.findall(r" loss=([0-1].[0-9]+)", line)
+                    if float(loss[0]) < loss_rate:
+                        label = re.findall(r"INFO: ([a-zA-Z]+)", line) #SQAudioTX
+                        quality = re.findall(r"w*h=([0-9]+x[0-9]+)", line) #1280x720
+                        fps = re.findall(r" fps=([0-9]+)", line) #15
+                        jitter = re.findall(r" jitter=([0-9]+)", line) #0
+                        inner["time"].append(line.split("<")[0]) # ex. 2020-04-20T14:01:59.342Z
+                        inner["ssrc_hex"].append(ssrc)
+                        inner["ssrc_dec"].append(int(ssrc, 16))
+                        if label: inner["label"].append(label[0])
+                        if quality: inner["quality"].append(quality[0])
+                        if fps: inner["fps"].append(int(fps[0]))
+                        if jitter: inner["jitter"].append(float(jitter[0]))
+                    else:
+                        pass
 
-                    inner["time"].append(line.split("<")[0]) # ex. 2020-04-20T14:01:59.342Z
-                    inner["ssrc_hex"].append(ssrc)
-                    inner["ssrc_dec"].append(int(ssrc, 16))
-                    if label: inner["label"].append(label[0])
-                    if quality: inner["quality"].append(quality[0])
-                    if fps: inner["fps"].append(int(fps[0]))
-                    if jitter: inner["jitter"].append(float(jitter[0]))
 
             #Metti gli informazioni dentro il dizionario d_log
             #Audio e video hanno info differenti (quality, fps) quindi cancella qualche colona su audio
