@@ -5,14 +5,13 @@ from Decode import decode_stacked
 import os
 import json
 import sys
-from Json2List import json_to_list
 from json2stat import json2stat
-import time
 from plotting_static import plot_stuff_static
 from plotting import plot_stuff
 from Martino_log import compute_stats
 import copy
 import sys
+import numpy as np
 
 def pcap_to_port(source_pcap):
     try:
@@ -54,16 +53,50 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
         label = tuple_param[11]
         name = os.path.basename(source_pcap).split(".")[0] # nome del pcap senza estensione
         pcap_path = os.path.dirname(source_pcap) # percorso pcap senza file
-        json_path = os.path.join(pcap_path,name+".json")
-        command = ['tshark', '-r', source_pcap, '-l', '-n', '-T', 'ek']
+        filtro = "rtp.version==2"
+        port_add = []
         for port in used_port:
-            command.append("-d udp.port==" + str(port) + ",rtp")
-        with open(os.path.join(pcap_path,name+".txt") ,"w",encoding = 'utf-8') as file:
-            subprocess.Popen(command,stdout = file, stderr = None ,encoding = 'utf-8').communicate()
-        output = os.path.join(pcap_path,name+".txt") #direcotry file output da tshark
-        dict_flow_data, df_unique_flow, unique_flow= json_to_list(output, json_path, time_drop, json_file)
-        # for flow_id in dict_flow_data.keys():
-        #     print(type(dict_flow_data[flow_id]["timestamps"].iloc[0]))
+            port_add.append("-d udp.port==" + str(port) + ",rtp")
+
+        command = f"""tshark -r {file} -Y {filtro} \
+                     -T fields {" ".join(portee)} -E separator=? -E header=y -e frame.time_epoch -e frame.number -e \
+                     ip.src -e ip.dst -e udp.srcport \
+                     -e udp.dstport  -e udp.length  -e rtp.p_type -e rtp.ssrc -e rtp.timestamp \
+                     -e rtp.seq  -e rtp.marker -e rtp.csrc.item """
+        o,e= subprocess.Popen(command.split(),encoding = 'utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE ,shell=True).communicate()
+        r = o.split("\n")
+        del(o)
+        rr = [x.split("?") for x in r if '' not in x.split("?")[0:12] ]
+        del(r)
+        name_col = rr.pop(0)
+        df = pd.DataFrame(rr, columns=name_col)
+
+        df = df.astype({'frame.time_epoch': 'float64', 'frame.number' : "int32", 'udp.length' : "int32", 'rtp.p_type' : "int32",
+                   'rtp.timestamp' : np.int64, "udp.srcport" : "int32",
+                   "udp.dstport" : "int32", 'rtp.marker' : "int32", 'rtp.seq' : "int32",
+                   })
+        df = df.rename(columns ={
+            'frame.time_epoch' : 'timestamps',
+            'frame.number' : 'frame_num',
+            'ip.src' : 'ip_src',
+            'ip.dst' : 'ip_dst',
+            'udp.srcport' : 'prt_src',
+            'udp.dstport' : 'prt_dst',
+            'udp.length' :  'len_udp',
+            'rtp.p_type' : 'p_type',
+            'rtp.ssrc' : 'ssrc',
+            'rtp.timestamp' : 'rtp_timestamp',
+            'rtp.seq' : 'rtp_seq_num',
+            'rtp.marker' : 'rtp_marker',
+             'rtp.csrc.item' : 'rtp_csrc'
+                })
+        columns = ["ip_src", "ip_dst", "prt_src", "prt_dst", "ssrc", "p_type"]
+        gb= df.groupby(columns)
+        dict_flow_data = {x : gb.get_group(x) for x in gb.groups if x is not None and np.max(gb.get_group(x)["timestamps"]) - np.min(gb.get_group(x)["timestamps"])>time_drop}
+        df_unique_flow = pd.DataFrame(columns = columns)
+        for key in dict_flow_data.keys():
+            df_unique_flow=df_unique_flow.append(pd.Series(key, index=columns), ignore_index=True)
+
         if general_log: #genera log simile a tstat
             general_dict_info = {}
             for flow_id in dict_flow_data:
