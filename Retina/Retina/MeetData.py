@@ -25,23 +25,31 @@ def OtherDataset(dict_flow_data, pcap_path, name, label, time_aggregation):
     try:
         df_train = pd.DataFrame()
         LEN_DROP = 0
+       # start = len(dict_flow_data.keys())
         dict_flow_data, LEN_DROP = inter_statistic (dict_flow_data, LEN_DROP)
         percentili = [p10, p20, p25, p30, p40, p50, p60, p70, p75, p80, p90, p95, max_min_R, kurtosis, skew,\
             moment3, moment4, len_unique_percent, max_value_count_percent, min_max_R]
-        dict_flow_data = etichetto_name(dict_flow_data,label)
+       # dopo_stat = len(dict_flow_data.keys())
+        dict_flow_data = etichetto_name(dict_flow_data,label,name)
+       # after = len(dict_flow_data.keys())
+       # print(f"Lunghezza start {start} dopo stats {dopo_stat} name {after}")
+        #if dict_flow_data is None:
+        #    print("dopo etichetto_name")
         df_train = pd.DataFrame()
         for flow_id in dict_flow_data.keys():
             dict_flow_data[flow_id]["timestamps"] = pd.to_datetime(dict_flow_data[flow_id]["timestamps"], unit = 's')
             dict_flow_data[flow_id].set_index('timestamps', inplace = True)
             dict_flow_data[flow_id] = dict_flow_data[flow_id].dropna()
+            #print(dict_flow_data[flow_id].columns)
             train = dict_flow_data[flow_id].resample(f"{time_aggregation}s").agg({\
                 'interarrival' : ['std', 'mean', max_min_diff]+percentili, \
                 'len_udp' : ['std', 'mean', 'count', kbps, max_min_diff]+percentili, \
                 'interlength_udp' : ['std', 'mean', max_min_diff]+percentili,\
                 'rtp_interarrival' : ['std', 'mean', zeroes_count, max_min_diff]+percentili ,\
                 "inter_time_sequence": ['std', 'mean', max_min_diff]+percentili ,\
-                "label": [value_label],  "label2": [value_label]\
-                                                                })
+                "label": [value_label],  "label2": [value_label], \
+                "rtp_seq_num" : [packet_loss], \
+                                                        })
             train["flow"] = str(flow_id)
             train["pcap"] = str(name)
             df_train = pd.concat([df_train, train])
@@ -76,7 +84,8 @@ def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, fi
                        'interlength_udp' : ['std', 'mean', max_min_diff]+percentili,\
                        'rtp_interarrival' : ['std', 'mean', zeroes_count, max_min_diff]+percentili ,\
                        "inter_time_sequence": ['std', 'mean', max_min_diff]+percentili,
-                       "rtp_marker" : [sum_check]
+                       "rtp_marker" : [sum_check], \
+                       "rtp_seq_num" : [packet_loss], \
                                                                             })
 
             for flow_id in dict_flow_data_2.keys():

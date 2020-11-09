@@ -16,24 +16,25 @@ import numpy as np
 def pcap_to_port(source_pcap):
     try:
     # Retrive all STUN packets
-        command = ['tshark', '-r', source_pcap, '-l', '-n', '-T', 'ek', '-Y (stun)']
-        process = subprocess.run(command, stdout=subprocess.PIPE, encoding = 'utf-8', errors="ignore", shell=False )
-        output = process.stdout
+        #command = ['tshark', '-r', source_pcap, '-l', '-n', '-T', 'ek', '-Y (stun)']
+        command = f"tshark -r {source_pcap} -T fields  -E separator=? -E header=n -e udp.srcport -e udp.dstport"
+        output, e = subprocess.Popen(command, stdout=subprocess.PIPE, encoding = 'utf-8', errors="ignore", shell=True).communicate()
     except Exception as e:
         print ("Errore in pcap_to_json: {}".format(e))
         process.kill()
         raise e
     # I've got all STUN packets: need to find which ports are used by RTP
-    used_port = set()
-    for obj in decode_stacked(output):
-        try:
-            if 'index' in obj.keys():
-                continue
-            if 'stun' in obj['layers'].keys() and "0x00000101" in obj['layers']["stun"]["stun_stun_type"]:          #0x0101 means success
-                used_port.add(obj['layers']["udp"]["udp_udp_srcport"])
-                used_port.add(obj['layers']["udp"]["udp_udp_dstport"])
-        except:
-            continue
+    used_port=set([int(x) for x in output.replace('\n','?').split('?') if x != ''])
+    #used_port = set([10000, 50412])
+    #for obj in decode_stacked(output):
+    #    try:
+    #        if 'index' in obj.keys():
+    #            continue
+    #        if 'stun' in obj['layers'].keys() and "0x00000101" in obj['layers']["stun"]["stun_stun_type"]:          #0x0101 means success
+    #            used_port.add(obj['layers']["udp"]["udp_udp_srcport"])
+    #            used_port.add(obj['layers']["udp"]["udp_udp_dstport"])
+    #    except:
+    #        continue
     return {"pcap" : source_pcap, "port" : list(used_port)}
 
 def pcap_to_json(tuple_param): #source_pcap, used_port
@@ -59,24 +60,29 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
             port_add.append("-d udp.port==" + str(port) + ",rtp")
 
         command = f"""tshark -r {source_pcap} -Y {filtro} \
-                     -T fields {" ".join(port_add)} -E separator=? -E header=y -e frame.time_epoch -e frame.number -e \
-                     ip.src -e ip.dst -e udp.srcport \
+                     -T fields {" ".join(port_add)} -E separator=? -E header=y -e frame.time_epoch -e frame.number \
+                     -e frame.len -e udp.srcport \
                      -e udp.dstport  -e udp.length  -e rtp.p_type -e rtp.ssrc -e rtp.timestamp \
-                     -e rtp.seq  -e rtp.marker -e rtp.csrc.item """
-        o,e= subprocess.Popen(command.split(),encoding = 'utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE ,shell=True).communicate()
+                     -e rtp.seq  -e rtp.marker -e rtp.csrc.item -e ip.src -e ipv6.src -e ip.dst -e ipv6.dst  --enable-heuristic rtp_stun"""
+        o,e= subprocess.Popen(command, encoding = 'utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE ,shell=True).communicate()
         r = o.split("\n")
+        name_col = r.pop(0)
+        name_col = [e for e in name_col.split("?") if e not in ('ipv6.dst','ipv6.src')]
+        #rint(f"string len: {len(r)}")
         del(o)
-        rr = [x.split("?") for x in r if '' not in x.split("?")[0:12] ]
+        rr = [x.split("?")[0:12]+ list(filter(None,x.split("?")[12:16])) for x in r if '' not in x.split("?")[0:9]] #devo tenere solo ipv4 o 6 per ogni pacchetto
         del(r)
-        name_col = rr.pop(0)
         df = pd.DataFrame(rr, columns=name_col)
-        df = df.astype({'frame.time_epoch': 'float64', 'frame.number' : "int32", 'udp.length' : "int32", 'rtp.p_type' : "int32",
-                   'rtp.timestamp' : np.int64, "udp.srcport" : "int32",
-                   "udp.dstport" : "int32", 'rtp.marker' : "int32", 'rtp.seq' : "int32",
+        df['rtp.p_type']=df['rtp.p_type'].apply(lambda x: x.split(",")[0]) # a volte jitsi mteams hanno più p_type, prendiamo solo il primo
+        df = df.astype({'frame.time_epoch': 'float64', 'frame.number' : "int32", 'frame.len' : "int32", \
+                        'udp.length' : "int32", 'rtp.p_type' : "int", \
+                        'rtp.timestamp' : np.int64, "udp.srcport" : "int32", \
+                         "udp.dstport" : "int32", 'rtp.marker' : "int32", 'rtp.seq' : "int32", \
                    })
         df = df.rename(columns ={
             'frame.time_epoch' : 'timestamps',
             'frame.number' : 'frame_num',
+            'frame.len' : "len_frame",
             'ip.src' : 'ip_src',
             'ip.dst' : 'ip_dst',
             'udp.srcport' : 'prt_src',

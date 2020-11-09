@@ -17,13 +17,11 @@ def make_fec_dict(log, dict_flow_data):
         SDP_FEC = [line for line in SDP if "x-ulpfecuc" in line]#a=rtpmap:127 x-ulpfecuc/8000
         SDP_FEC = list(set(SDP_FEC))
         PT_FEC = [int(i.replace(' ', ':').split(":")[1]) for i in SDP_FEC]
-
         #Find recieved FEC group IDs
         fec_ssrc_group_IDs = []
         for line in log:
             if "fec-ssrc" in line:
                 fec_ssrc_group_IDs.append(re.findall(r'groupId=([0-9]+)', line)[0])
-
         #dictionary: ssrc of FEC : ssrc of protected stream in decimal
         ssrc_protected_streams = {}
         for group_id in fec_ssrc_group_IDs:
@@ -35,7 +33,6 @@ def make_fec_dict(log, dict_flow_data):
         #fec_dict has {fec key: protected stream keys}
         fec_dict = {}
         fec_keys = [key for key,value in dict_flow_data.items() if key[5] in PT_FEC] #keys of all streams with Payload type FEC
-
         for fec_key in fec_keys:
             fec_dict[fec_key] = []
             #if it has a csrc in dict_flow_data (which is not "fec"), it's a sent FEC
@@ -53,7 +50,6 @@ def make_fec_dict(log, dict_flow_data):
                     for key,value in dict_flow_data.items():
                         if key[0] in protected_streams and not value.empty:
                             fec_dict[fec_key].append(key)
-
         return fec_dict
     except Exception as e:
         print('make_fec_dict: Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
@@ -70,13 +66,17 @@ def make_d_log(log, dict_flow_data, loss_rate=0.2):
             inner = {k:[] for k in ["time", "ssrc_hex", "ssrc_dec", "label", "quality", "fps", "jitter"]}
 
             for line in log:
+                #AUDIO EXAMPLE:
                 #2020-04-20T14:01:59.342Z <Info> [9968] WME:0 :[SQ] [SQ] INFO: SQAudioTX - vid=0 csi=843778816 did=0 ssrc=1613872330 loss=0.000 drop=0.000 jitter=0 bytes=201518 rtp=1306 failed=0 bitrate=65016 rtt=33 bw=176000 inputRate=48552 errcnt=0 dtmf=0 codecType=4 encodeDropMs=0 rrWin=0 br=61400 type=UDP rtcp=156 cFecOn=0 fecBw=88000 fecBitRate=91392 fecPkt=1305 mari_loss=0.000 mari_qdelay=12 mari_rtt=47 mari_recvrate=130112 nbr=65016 cid__783311041
+                
+                #VIDEO EXAMPLE:
+                #2020-05-12T12:23:20.081Z <Info> [1184] WME:0 :[SQ] [SQ] INFO: SQVideoRX - vid=0:38 scrPcy=2 csi=26140929 w*h=640x360 fps=0 br=0 idrReq=0 idrRcvd=1 decodeDrp=0.000 rendered=11 codecType=100 ssrc=1354842142 loss=0.000 lossCnt=0 drop=0.000 jitter=0 bytes=26611 rtp=38 processed=38 bitrate=212888 ooo=0 dup=0 errcnt=0 fecrecovered=0 fecloss=0.000 hopByHopLoss=0.000 hopByHopFecLoss=0.000 type=UDP rrWin=141 rtcp=18 fecLevel=0 fecBitrate=0 fecPkt=0 mari_loss=0.000 mari_qdelay=0 mari_recvrate=0 rtpPkt=38 mari_lossCnt=0 nbr=212888 cid__13214106
                 substring = "ssrc=" + str(int(ssrc, 16)) #converto ssrc hex in dec
                 if (substring in line) and ("[SQ]" in line):
                     loss = re.findall(r" loss=([0-1].[0-9]+)", line)
                     if float(loss[0]) < loss_rate:
                         label = re.findall(r"INFO: ([a-zA-Z]+)", line) #SQAudioTX
-                        quality = re.findall(r"w*h=([0-9]+x[0-9]+)", line) #1280x720
+                        quality = re.findall(r"w*h=([0-9]+x[0-9]+)", line) #['1280x720']
                         fps = re.findall(r" fps=([0-9]+)", line) #15
                         jitter = re.findall(r" jitter=([0-9]+)", line) #0
                         inner["time"].append(line.split("<")[0]) # ex. 2020-04-20T14:01:59.342Z
@@ -89,9 +89,8 @@ def make_d_log(log, dict_flow_data, loss_rate=0.2):
                     else:
                         pass
 
-
-            #Metti gli informazioni dentro il dizionario d_log
-            #Audio e video hanno info differenti (quality, fps) quindi cancella qualche colona su audio
+            #Metti le informazioni dentro il dizionario d_log
+            #Audio e video hanno info differenti (quality, fps) quindi cancella qualche colonna su audio
             try:
                 to_delete = [inner_key for inner_key in inner.keys() if not inner[inner_key]]
                 for i in to_delete:
@@ -172,7 +171,7 @@ def WebLogdf(dict_merge, pcap_name):
                           }
 
         df_train = pd.DataFrame()
-        columns_drop = [ 'time', 'ssrc_hex', 'ssrc_dec','quality', 'fps', 'jitter',]
+        columns_drop = [ 'time', 'ssrc_hex', 'ssrc_dec', 'fps', 'jitter'] #here there was also quality 
         for key in dict_merge.keys():
             dict_merge[key]["label2"] = dict_merge[key]["label"].map(dict_label)
             for ix in dict_merge[key].index:
@@ -180,9 +179,10 @@ def WebLogdf(dict_merge, pcap_name):
                 dict_merge[key].loc[ix, "pcap"] = pcap_name
                 if dict_merge[key].loc[ix,"label"].startswith("SQVideo"):
                     quality = min([int(i) for i in dict_merge[key].loc[ix,"quality"].split("x")]) # 180, 320 o 720
+                    #dict_merge[key].loc[ix,"real_quality"] = 
                     if quality<=180: #LQ
                         dict_merge[key].loc[ix,"label"] = 6
-                    elif quality>180 and quality<=360: #MQ
+                    elif quality>180 and quality<720: #MQ
                         dict_merge[key].loc[ix,"label"] = 7
                     else: #HQ
                         dict_merge[key].loc[ix,"label"] = 5
@@ -191,7 +191,7 @@ def WebLogdf(dict_merge, pcap_name):
                 else:
                     dict_merge[key].loc[ix,"label"] = dict_label[dict_merge[key].loc[ix,"label"]]
             train = dict_merge[key].drop(columns_drop, axis = 1, errors = 'ignore')
-            df_train = pd.concat([df_train, train])
+            df_train = pd.concat([df_train, train])  
         return df_train
     except Exception as e:
         print('LogWebex: Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)

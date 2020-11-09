@@ -18,16 +18,21 @@ def json2stat (dict_flow_data, pcap_path, name, time_aggregation, screen = None,
             else:
                 file_log = file_log[0]
         else:
-            print(f"Nessun file di log trovato per {name}.pcap")
+            #print(f"Nessun file di log trovato per {name}.pcap")
+            pass
         #print ("Sono Dentro")
         if (software == "webex"):
             dataset_dropped = WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, file_log, time_aggregation, loss_rate=loss_rate)
+            dataset_dropped["quality"].fillna("other", inplace=True)
         elif (software == "jitsi"):
             dataset_dropped = JitsiDataset(dict_flow_data, pcap_path, name, screen, quality, software, file_log, time_aggregation)
         elif (software == "zoom"):
             dataset_dropped = ZoomDataset(dict_flow_data, pcap_path, name, screen, quality, software, file_log, time_aggregation)
         elif (software == "other"):
             dataset_dropped = OtherDataset(dict_flow_data, pcap_path, name, label, time_aggregation)
+            if dataset_dropped is None:
+                print((f"Dataset Nan {name}"))
+                return None
         else:
             pass
         if software:

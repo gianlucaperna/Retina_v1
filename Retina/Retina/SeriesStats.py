@@ -7,6 +7,20 @@ Created on Sat Apr 25 15:16:19 2020
 import numpy as np
 import pandas as pd
 
+def packet_loss(series):
+    try:
+        if not series.empty:
+            if max(series)-min(series) > 15000:
+                #qui siamo nel cammbio
+                series = [i if i >40000 else i+65536 for i in series]
+            rx = len(series)
+            tx = max(series)-min(series)+1
+            return 1-(rx/tx)
+        else:
+            #print("qui")
+            return -1
+    except Exception as e:
+        print(e)
 
 def sum_check(series):
     if -1 in series:
