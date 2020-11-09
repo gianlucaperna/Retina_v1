@@ -44,6 +44,8 @@ def json2stat (dict_flow_data, pcap_path, name, time_aggregation, screen = None,
             dataset_dropped = dataset_dropped.rename(columns={'rtp_interarrival_std': 'rtp_inter_timestamp_std'})
             dataset_dropped = dataset_dropped.rename(columns={'rtp_interarrival_mean': 'rtp_inter_timestamp_mean'})
             dataset_dropped = dataset_dropped.rename(columns={'rtp_interarrival_zeroes_count': 'rtp_inter_timestamp_num_zeros'})
+            dataset_dropped = dataset_dropped.rename(columns={'flow_': 'flow'}, errors="ignore")
+            dataset_dropped = dataset_dropped.rename(columns={'pcap_': 'pcap'}, errors="ignore")
             pcap_path = os.path.join(pcap_path, name)
             with open(pcap_path + f"_{time_aggregation}s.csv", "w") as file:
                 dataset_dropped.to_csv( file, index = False)

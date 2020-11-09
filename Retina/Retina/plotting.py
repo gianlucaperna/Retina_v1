@@ -120,7 +120,8 @@ def plot_stuff(pcap_path, dict_flow_df, df_unique, dataset_dropped):
 
     #print(f"Plotting information of {pcap_path}")
 
-    
+    #print(dict_flow_df[('0x9addd8d5', '192.168.1.105', '69.26.161.221', 64694, 5004, 108)].columns)
+    print(list(dataset_dropped.columns))
     #print("Dataset dropped in plotting dynamic: \n", dataset_dropped.head(5))
     flow_label = label_for_plotting(dataset_dropped)
     #print("Flow label:\n", flow_label)
