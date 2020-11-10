@@ -54,7 +54,7 @@ def OtherDataset(dict_flow_data, pcap_path, name, label, time_aggregation):
             train["pcap"] = str(name)
             df_train = pd.concat([df_train, train])
             dataset_dropped = df_train.dropna()
-            dataset_dropped.reset_index(inplace = True, drop = True)
+            dataset_dropped.reset_index(inplace = True, drop = False)
         new_header = []
         for h in dataset_dropped.columns:
             new_header.append(h[0] + "_" + h[1])

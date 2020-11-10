@@ -96,7 +96,12 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
              'rtp.csrc.item' : 'rtp_csrc'
                 })
         df["rtp_csrc"].replace('',"fec", inplace=True)
-        columns = ["ssrc", "ip_src", "ip_dst", "prt_src", "prt_dst" , "p_type"]
+        if software=="webex":
+            columns=["ssrc", "ip_src", "ip_dst", "prt_src", "prt_dst" , "p_type"]
+        elif label=="skype":
+            columns=["ssrc", "ip_src", "ip_dst", "prt_src", "prt_dst"]
+        else:
+            pass
         gb= df.groupby(columns)
         dict_flow_data = {x : gb.get_group(x) for x in gb.groups if x is not None and np.max(gb.get_group(x)["timestamps"]) - np.min(gb.get_group(x)["timestamps"])>time_drop}
         df_unique_flow = pd.DataFrame(columns = columns)
