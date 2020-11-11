@@ -42,7 +42,7 @@ def OtherDataset(dict_flow_data, pcap_path, name, label, time_aggregation):
             dict_flow_data[flow_id] = dict_flow_data[flow_id].dropna()
             #print(dict_flow_data[flow_id].columns)
             train = dict_flow_data[flow_id].resample(f"{time_aggregation}s").agg({\
-                'interarrival' : ['std', 'mean', max_min_diff]+percentili, \
+                'interarrival' : ['std', 'mean', 'min', 'max', max_min_diff]+percentili, \
                 'len_udp' : ['std', 'mean', 'count', kbps, max_min_diff]+percentili, \
                 'interlength_udp' : ['std', 'mean', max_min_diff]+percentili,\
                 'rtp_interarrival' : ['std', 'mean', zeroes_count, max_min_diff]+percentili ,\
@@ -79,11 +79,11 @@ def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, fi
                    dict_flow_data[flow_id].set_index('timestamps', inplace = True)
                    dict_flow_data[flow_id] = dict_flow_data[flow_id].dropna()
                    dict_flow_data_2[flow_id] = dict_flow_data[flow_id].resample(f"{time_aggregation}s").agg({
-                       'interarrival' : ['std', 'mean', max_min_diff]+percentili,\
+                       'interarrival' : ['std', 'mean', 'min', 'max', max_min_diff]+percentili,\
                        'len_udp' : ['std', 'mean', 'count', kbps, max_min_diff]+percentili, \
                        'interlength_udp' : ['std', 'mean', max_min_diff]+percentili,\
                        'rtp_interarrival' : ['std', 'mean', zeroes_count, max_min_diff]+percentili ,\
-                       "inter_time_sequence": ['std', 'mean', max_min_diff]+percentili,
+                       "inter_time_sequence": ['std', 'mean', max_min_diff]+percentili, \
                        "rtp_marker" : [sum_check], \
                        "rtp_seq_num" : [packet_loss], \
                                                                             })
@@ -115,12 +115,12 @@ def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, fi
                 dict_flow_data[flow_id].set_index('timestamps', inplace = True)
                 dict_flow_data[flow_id] = dict_flow_data[flow_id].dropna()
                 train = dict_flow_data[flow_id].resample(f"{time_aggregation}s").agg({\
-                    'interarrival' : ['std', 'mean', max_min_diff]+percentili, \
+                    'interarrival' : ['std', 'mean', 'min', 'max', max_min_diff]+percentili, \
                     'len_udp' : ['std', 'mean', 'count', kbps, max_min_diff]+percentili, \
                     'interlength_udp' : ['std', 'mean', max_min_diff]+percentili,\
                     'rtp_interarrival' : ['std', 'mean', zeroes_count, max_min_diff]+percentili ,\
                     "inter_time_sequence": ['std', 'mean', max_min_diff]+percentili ,\
-                    "rtp_marker" : [sum_check],
+                    "rtp_marker" : [sum_check],\
                     "label": [value_label],  "label2": [value_label]\
                                                                     })
                 train["flow"] = str(flow_id)

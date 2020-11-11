@@ -123,7 +123,7 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
             plot_stuff_static(plot_path, dict_flow_data, df_unique_flow)
         elif plot == "dynamic":
             plot_path = os.path.join(pcap_path,name)
-            plot_stuff(plot_path, dict_flow_data, df_unique_flow, dataset_dropped)
+            plot_stuff(plot_path, dict_flow_data, df_unique_flow, dataset_dropped, software)
         else:
             pass
 
