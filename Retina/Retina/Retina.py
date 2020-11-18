@@ -13,7 +13,9 @@ import os
 import multiprocessing
 import multiprocessing.pool
 import time
-
+from rich.console import Console
+from rich.table import Table
+from rich import box
 
 #%%
 def set_n_process (pcap_app):
@@ -23,7 +25,6 @@ def set_n_process (pcap_app):
         n_process = 30
     if len(pcap_app) < n_process:
         n_process = len(pcap_app)
-    print(f"N. worker: {n_process}")
     return n_process
 
 def split_file(pool_tuple):
@@ -59,8 +60,9 @@ def recursive_files(directory_p):
 
 
 if __name__ == "__main__":
+    console = Console()
     with open("text.txt", "r") as f:
-        print(f.read())
+        console.print(f"[bold magenta]{f.read()}[/bold magenta]\n[bold magenta]Authors:[/bold magenta] Gianluca Perna[i](gianluca.perna@polito.it)[/i], Dena Markudova[i](dena.markudova@polito.it)[/i]\n\n")
 
     multiprocessing.freeze_support()
     parser = argparse.ArgumentParser(description = "RTP flow analyzer")
@@ -91,8 +93,12 @@ if __name__ == "__main__":
     if (pcap_app == -1):
     	raise "File inserito non valido"
     n_process = set_n_process (pcap_app)
-    print("Pcap to elaborate:\n")
-    print(*pcap_app, sep = "\n")
+    table = Table(show_header=True, header_style="bold magenta", box=box.HORIZONTALS)
+    table.add_column("Pcap to elaborate:", justify="center")
+    for i in pcap_app: table.add_row(i, style="cornflower_blue bold")
+    console.print(table)
+    console.print(f"[bold magenta]N. worker:[/] {n_process}")
+    #print(*pcap_app, sep = "\n")
     #For each .pcap in the folders, do the process
     manager = multiprocessing.Manager()
     result_list = manager.list()
@@ -119,7 +125,7 @@ if __name__ == "__main__":
     	pcap_app = [j for i in result_list for j in i]
     	result_list[:] = []
     #Cerco le porte
-    print (f"PID main: {os.getpid()}")
+    console.print(f"[bold magenta]PID main:[/bold magenta] {os.getpid()}")
     pool= multiprocessing.Pool(processes = n_process, maxtasksperchild=1, ) #Limito il numero di processi ai core della cpu -1
     pool_tuple = [(x, result_list) for x in pcap_app]
     pool.imap_unordered(main2, pool_tuple, chunksize=1)
