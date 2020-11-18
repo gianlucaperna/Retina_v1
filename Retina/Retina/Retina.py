@@ -93,12 +93,10 @@ if __name__ == "__main__":
     if (pcap_app == -1):
     	raise "File inserito non valido"
     n_process = set_n_process (pcap_app)
-    table = Table(show_header=True, header_style="bold magenta", box=box.HORIZONTALS)
-    table.add_column("Pcap to elaborate:", justify="center")
+    table = Table(show_header=True, header_style="bold magenta", box=box.HORIZONTALS, show_footer=True )
+    table.add_column("Pcap to elaborate:", justify="center", footer=f"[bold magenta]N. worker:[/] [cornflower_blue bold]{n_process}[/], [bold magenta]PID main:[/bold magenta] [cornflower_blue bold]{os.getpid()}[/]")
     for i in pcap_app: table.add_row(i, style="cornflower_blue bold")
     console.print(table)
-    console.print(f"[bold magenta]N. worker:[/] {n_process}")
-    #print(*pcap_app, sep = "\n")
     #For each .pcap in the folders, do the process
     manager = multiprocessing.Manager()
     result_list = manager.list()
@@ -125,7 +123,6 @@ if __name__ == "__main__":
     	pcap_app = [j for i in result_list for j in i]
     	result_list[:] = []
     #Cerco le porte
-    console.print(f"[bold magenta]PID main:[/bold magenta] {os.getpid()}")
     pool= multiprocessing.Pool(processes = n_process, maxtasksperchild=1, ) #Limito il numero di processi ai core della cpu -1
     pool_tuple = [(x, result_list) for x in pcap_app]
     pool.imap_unordered(main2, pool_tuple, chunksize=1)
