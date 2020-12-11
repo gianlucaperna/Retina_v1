@@ -142,11 +142,11 @@ def plot_stuff(pcap_path, dict_flow_df, df_unique, dataset_dropped, software):
                                 y=data_plot[flows[i]],
                                 mode=mode,
                                 name=name,
-                                line=dict(color=colour),
+#                                 line=dict(color=colour),
                                 ))
             else:
                 line=dict(dash='dash',
-                          color=colour,
+#                           color=colour,
                          )
                 fig.add_trace(go.Scatter(
                                 x=data_plot[flows[i]].index,
@@ -211,6 +211,7 @@ def plot_stuff(pcap_path, dict_flow_df, df_unique, dataset_dropped, software):
     interarrival_min_csv = {}
     interarrival_max_csv = {}
     rtp_marker_sum = {}
+
     
     for flow in flows:
         df_scenario = dataset_dropped[dataset_dropped["flow"] == str(flow)].copy()
@@ -226,9 +227,6 @@ def plot_stuff(pcap_path, dict_flow_df, df_unique, dataset_dropped, software):
         interarrival_max_csv[flow] = df_scenario["interarrival_max"].copy()
         if software == "webex":
             rtp_marker_sum[flow] = df_scenario["rtp_marker_sum_check"].copy()
-
-    print("interarrival_min_csv", interarrival_min_csv)
-    print("interarrival_max_csv", interarrival_max_csv)
     
     #Additional useful data
     #Unique df that has also csrc and label
