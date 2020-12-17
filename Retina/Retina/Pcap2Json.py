@@ -56,6 +56,7 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
         pcap_path = os.path.dirname(source_pcap) # percorso pcap senza file
         filtro = "rtp.version==2"
         port_add = []
+        print(source_pcap)
         for port in used_port:
             port_add.append("-d udp.port==" + str(port) + ",rtp")
 
