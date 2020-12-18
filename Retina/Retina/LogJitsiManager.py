@@ -266,7 +266,6 @@ def JitsiLogdf(dict_merge, pcap_name):
             train = dict_merge[key].drop(columns_drop, axis = 1, errors = 'ignore')
             train = train.loc[train["label"] != -1]
             df_train = pd.concat([df_train, train])
-        print(f"QUIII {df_train.shape}")
         #Attenti con questo drop!
         df_train = df_train.dropna()
         return df_train
