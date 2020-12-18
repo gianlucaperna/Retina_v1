@@ -13,8 +13,12 @@ import sys
 from ast import literal_eval as make_tuple
 import itertools
 import seaborn as sns
+# from rich.console import Console
+# console = Console()
+from rich.traceback import install
+install()
 
-def make_rtp_data(dict_flow_data):
+def make_rtp_data(dict_flow_data, flows):
 
     packets_per_second = {}
     kbps_series = {}
@@ -25,12 +29,14 @@ def make_rtp_data(dict_flow_data):
     interarrival_min = {}
     interarrival_max = {}
 
-    for flow_id in dict_flow_data:
+    for flow_id in flows:
         #If the index is already datetime
         if isinstance(dict_flow_data[flow_id].index, pd.DatetimeIndex):
             inner_df = dict_flow_data[flow_id].sort_index().reset_index()
         else:
             inner_df = dict_flow_data[flow_id].sort_values('timestamps')
+            
+#         print("Index: ", inner_df.index, "Columns: ", inner_df.columns)
 
         # Need to define a datetime index to use resample
         datetime = pd.to_datetime(inner_df['timestamps'], unit = 's')
@@ -81,16 +87,18 @@ def label_for_plotting(dataset_dropped):
     flow_label = {}
     for flow in dataset_dropped["flow"].unique():
         try:
-            flow_label[make_tuple(flow)] = dict_label[dataset_dropped[dataset_dropped["flow"] == flow]["label"].iloc[0]]
-        except e:
+            main_label = dataset_dropped[dataset_dropped["flow"] == flow]["label"].value_counts().index[0]
+            flow_label[make_tuple(flow)] = dict_label[main_label]
+        except Exception as e:
             print("Error in flow_label.")
     
     return flow_label
 
 
-def make_new_unique_table (dict_flow_df, flow_label):    
+def make_new_unique_table (dict_flow_df, flow_label, flows):    
     unique_l = []
-    for key, value in dict_flow_df.items():
+    for key in flows:
+        value = dict_flow_df[key]
         inner_list = []
         for m in key:
             inner_list.append(m)
@@ -104,10 +112,11 @@ def make_new_unique_table (dict_flow_df, flow_label):
     unique_df = pd.DataFrame(data=unique_l, columns=["ssrc", "source_addr", "dest_addr", "source_port", "dest_port", "rtp_p_type", "csrc", "label"])
     return unique_df
 
-def make_dict_csrc(dict_flow_df, unique_df):
+def make_dict_csrc(dict_flow_df, unique_df, flows):
     csrcs = unique_df["csrc"].unique()
     csrc_flows = {k: [] for k in csrcs}
-    for key, value in dict_flow_df.items():
+    for key in flows:
+        value = dict_flow_df[key]
         csrc_value = value["rtp_csrc"].iloc[0]
         csrc_flows[csrc_value].append(key)
         
@@ -170,173 +179,172 @@ def plot_stuff(pcap_path, dict_flow_df, df_unique, dataset_dropped, software):
 
         return fig
     
-    
-    #Main of plotting
-    flow_label = label_for_plotting(dataset_dropped)
-
-    #Saving info
-    save_dir = os.path.join(pcap_path, "Plots_html")
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-        
-    #Take keys of dict_flow_data in a list to iterate them easily
-#     l_keys = list(dict_flow_df.keys())
-    
-    #Take flows from dataset_dropped and turn them into tuples
-    flows = []
-    for flow in dataset_dropped["flow"].unique():
-        flows.append(eval(flow))
-
-    #Just checking if keys in dataset dropped are equal to those of dict flow data
-    if flows != list(dict_flow_df.keys()):
-        print("Mismatch dict_flow_data and csv data")
-
-    #Take data from dict_flow_data
-    packets_per_second,\
-    kbps_series,\
-    inter_packet_gap_s,\
-    inter_rtp_timestamp_gap,\
-    len_frame,\
-    rtp_timestamp,\
-    interarrival_min,\
-    interarrival_max = \
-            make_rtp_data(dict_flow_df)
-
-
-    #Take data from dataset_dropped - aggregated data (1s,2s,5s)
-    losses_csv = {}
-    kbps_csv = {}
-    packets_per_second_csv = {}
-    interarrival_std_csv = {}
-    interarrival_min_csv = {}
-    interarrival_max_csv = {}
-    rtp_marker_sum = {}
-
-    
-    for flow in flows:
-        df_scenario = dataset_dropped[dataset_dropped["flow"] == str(flow)].copy()
-#         df_scenario = df_scenario.sort_values('timestamps')
-        df_scenario["timestamps"] = pd.to_datetime(df_scenario["timestamps"])
-        df_scenario = df_scenario.set_index("timestamps")
-        
-        losses_csv[flow] = df_scenario["rtp_seq_num_packet_loss"].copy()
-        kbps_csv[flow] = df_scenario["kbps"].copy()
-        packets_per_second_csv[flow] = df_scenario["num_packets"].copy()
-        interarrival_std_csv[flow] = df_scenario["interarrival_std"].copy()
-        interarrival_min_csv[flow] = df_scenario["interarrival_min"].copy()
-        interarrival_max_csv[flow] = df_scenario["interarrival_max"].copy()
-        if software == "webex":
-            rtp_marker_sum[flow] = df_scenario["rtp_marker_sum_check"].copy()
-    
-    #Additional useful data
-    #Unique df that has also csrc and label
-    unique_df = make_new_unique_table(dict_flow_df, flow_label)
-    
-    #csrc_flows - {csrc: list of flow tuples with that csrc}
-    #csrc_colour - {csrc: colour}
-    csrc_flows, csrc_colour = make_dict_csrc(dict_flow_df, unique_df)
-
-    #Plot stuff
-
-    # --------------Speed in kbps from dict_flow_data
-    data_plot = kbps_series.copy()
-    title = 'Bitrate in kbps'
-    y_label = "kbps"
-    fig_kbps = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
-    
-    
-    # --------------Packets per second from dict_flow_data
-    data_plot = packets_per_second.copy()
-    title = 'Packets per second'
-    y_label = "Number of packets"
-    fig_pps = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
-    
-    
-    # --------------Speed in kbps from dataset_dropped
-    data_plot = kbps_csv.copy()
-    title = 'Bitrate in kbps from csv'
-    y_label = "kbps from csv"
-    fig_kbps_csv = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
-    
-    # --------------Packets per second dataset_dropped
-    data_plot = packets_per_second_csv.copy()
-    title = 'Packets per second from csv'
-    y_label = "packets per second from csv"
-    fig_pps_csv = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
-    
-
-    # --------------Losses dataset_dropped
-    data_plot = losses_csv.copy()
-    title = 'Losses from csv'
-    y_label = "percentage of lost packets"
-    fig_losses = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
-
-
-    # --------------Interarrival dataset_dropped
-    data_plot = interarrival_std_csv.copy()
-    title = 'Interarrival standard deviation from csv'
-    y_label = "interarrival standard deviation"
-    fig_interarrival_std = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
-    
-    # --------------Interarrival min from dict_flow_data
-    data_plot = interarrival_min.copy()
-    title = 'Interarrival min per second'
-    y_label = "interarrival min"
-    fig_interarrival_min = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
-    
-    # --------------Interarrival max from dict_flow_data
-    data_plot = interarrival_max.copy()
-    title = 'Interarrival max per second'
-    y_label = "interarrival max"
-    fig_interarrival_max = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
-    
-    # --------------Interarrival min from csv
-    data_plot = interarrival_min_csv.copy()
-    title = 'Interarrival min per second from csv'
-    y_label = "interarrival min"
-    fig_interarrival_min_csv = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
-    
-    # --------------Interarrival max from csv
-    data_plot = interarrival_max_csv.copy()
-    title = 'Interarrival max per second from csv'
-    y_label = "interarrival max"
-    fig_interarrival_max_csv = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
-    
-    # --------------RTP marker sum check
-    if software == "webex":
-        data_plot = rtp_marker_sum.copy()
-        title = 'RTP marker sum'
-        y_label = "RTP marker sum"
-        fig_rtp_marker_sum = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
-
-
-
-    #Make table and save table and graphs in main html
-    html_table = table(unique_df, "Main Graph", True)
-    main_html_save = os.path.join(save_dir, "main_graphs.html")
-    with open(main_html_save, 'w') as f:
-        f.write("<h3 style='color:black;font-family:Open sans;'> Pcap folder: " +pcap_path.split("/")[-1]+ " </h3>")
-        f.write(html_table)
-    with open(main_html_save, 'a') as f:
-        f.write(fig_kbps.to_html(full_html=False, include_plotlyjs='cdn'))
-        f.write(fig_kbps_csv.to_html(full_html=False, include_plotlyjs='cdn'))
-        f.write(fig_pps.to_html(full_html=False, include_plotlyjs='cdn'))
-        f.write(fig_pps_csv.to_html(full_html=False, include_plotlyjs='cdn'))
-        f.write(fig_losses.to_html(full_html=False, include_plotlyjs='cdn'))
-        f.write(fig_interarrival_std.to_html(full_html=False, include_plotlyjs='cdn'))
-        f.write(fig_interarrival_min.to_html(full_html=False, include_plotlyjs='cdn'))
-        f.write(fig_interarrival_max.to_html(full_html=False, include_plotlyjs='cdn'))
-        f.write(fig_interarrival_min_csv.to_html(full_html=False, include_plotlyjs='cdn'))
-        f.write(fig_interarrival_max_csv.to_html(full_html=False, include_plotlyjs='cdn'))
-        if software == "webex":
-            f.write(fig_rtp_marker_sum.to_html(full_html=False, include_plotlyjs='cdn'))
-        
-
-    print("Did the main graphs successfully")
-
     try:
+        #Main of plotting
+        flow_label = label_for_plotting(dataset_dropped)
+
+        #Saving info
+        save_dir = os.path.join(pcap_path, "Plots_html")
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
+        #Take keys of dict_flow_data in a list to iterate them easily
+    #     l_keys = list(dict_flow_df.keys())
+
+        #Take flows from dataset_dropped and turn them into tuples
+        flows = []
+        for flow in dataset_dropped["flow"].unique():
+            flows.append(eval(flow))
+
+        #Just checking if keys in dataset dropped are equal to those of dict flow data
+#         if flows != list(dict_flow_df.keys()):
+#             print("Mismatch dict_flow_data and csv data")
+
+        #Take data from dict_flow_data
+        packets_per_second,\
+        kbps_series,\
+        inter_packet_gap_s,\
+        inter_rtp_timestamp_gap,\
+        len_frame,\
+        rtp_timestamp,\
+        interarrival_min,\
+        interarrival_max = \
+                make_rtp_data(dict_flow_df, flows)
+
+
+        #Take data from dataset_dropped - aggregated data (1s,2s,5s)
+        losses_csv = {}
+        kbps_csv = {}
+        packets_per_second_csv = {}
+        interarrival_std_csv = {}
+        interarrival_min_csv = {}
+        interarrival_max_csv = {}
+        rtp_marker_sum = {}
+
+
+        for flow in flows:
+            df_scenario = dataset_dropped[dataset_dropped["flow"] == str(flow)].copy()
+    #         df_scenario = df_scenario.sort_values('timestamps')
+    #         df_scenario["timestamps"] = pd.to_datetime(df_scenario["timestamps"])
+    #         df_scenario = df_scenario.set_index("timestamps")
+
+            losses_csv[flow] = df_scenario["rtp_seq_num_packet_loss"].copy()
+            kbps_csv[flow] = df_scenario["kbps"].copy()
+            packets_per_second_csv[flow] = df_scenario["num_packets"].copy()
+            interarrival_std_csv[flow] = df_scenario["interarrival_std"].copy()
+            interarrival_min_csv[flow] = df_scenario["interarrival_min"].copy()
+            interarrival_max_csv[flow] = df_scenario["interarrival_max"].copy()
+            if software == "webex":
+                rtp_marker_sum[flow] = df_scenario["rtp_marker_sum_check"].copy()
+
+        #Additional useful data
+        #Unique df that has also csrc and label
+        unique_df = make_new_unique_table(dict_flow_df, flow_label, flows)
+
+        #csrc_flows - {csrc: list of flow tuples with that csrc}
+        #csrc_colour - {csrc: colour}
+        csrc_flows, csrc_colour = make_dict_csrc(dict_flow_df, unique_df, flows)
+
+        #Plot stuff
+
+        # --------------Speed in kbps from dict_flow_data
+#         data_plot = kbps_series.copy()
+#         title = 'Bitrate in kbps'
+#         y_label = "kbps"
+#         fig_kbps = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
+
+    #     # --------------Packets per second from dict_flow_data
+    #     data_plot = packets_per_second.copy()
+    #     title = 'Packets per second'
+    #     y_label = "Number of packets"
+    #     fig_pps = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
+
+
+        # --------------Speed in kbps from dataset_dropped
+        data_plot = kbps_csv.copy()
+        title = 'Bitrate in kbps from csv'
+        y_label = "kbps from csv"
+        fig_kbps_csv = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
+
+        # --------------Packets per second dataset_dropped
+        data_plot = packets_per_second_csv.copy()
+        title = 'Packets per second from csv'
+        y_label = "packets per second from csv"
+        fig_pps_csv = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
+
+
+        # --------------Losses dataset_dropped
+        data_plot = losses_csv.copy()
+        title = 'Losses from csv'
+        y_label = "percentage of lost packets"
+        fig_losses = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
+
+
+        # --------------Interarrival dataset_dropped
+        data_plot = interarrival_std_csv.copy()
+        title = 'Interarrival standard deviation from csv'
+        y_label = "interarrival standard deviation"
+        fig_interarrival_std = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
+
+    #     # --------------Interarrival min from dict_flow_data
+    #     data_plot = interarrival_min.copy()
+    #     title = 'Interarrival min per second'
+    #     y_label = "interarrival min"
+    #     fig_interarrival_min = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
+
+    #     # --------------Interarrival max from dict_flow_data
+    #     data_plot = interarrival_max.copy()
+    #     title = 'Interarrival max per second'
+    #     y_label = "interarrival max"
+    #     fig_interarrival_max = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
+
+        # --------------Interarrival min from csv
+        data_plot = interarrival_min_csv.copy()
+        title = 'Interarrival min per second from csv'
+        y_label = "interarrival min"
+        fig_interarrival_min_csv = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
+
+        # --------------Interarrival max from csv
+        data_plot = interarrival_max_csv.copy()
+        title = 'Interarrival max per second from csv'
+        y_label = "interarrival max"
+        fig_interarrival_max_csv = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
+
+        # --------------RTP marker sum check
+        if software == "webex":
+            data_plot = rtp_marker_sum.copy()
+            title = 'RTP marker sum'
+            y_label = "RTP marker sum"
+            fig_rtp_marker_sum = plot_line(data_plot, title, y_label, flows, flow_label, dict_flow_df, csrc_colour)
+
+
+
+        #Make table and save table and graphs in main html
+        html_table = table(unique_df, "Main Graph", True)
+        main_html_save = os.path.join(save_dir, "main_graphs.html")
+        with open(main_html_save, 'w') as f:
+            f.write("<h3 style='color:black;font-family:Open sans;'> Pcap folder: " +pcap_path.split("/")[-1]+ " </h3>")
+            f.write(html_table)
+        with open(main_html_save, 'a') as f:
+#             f.write(fig_kbps.to_html(full_html=False, include_plotlyjs='cdn'))
+            f.write(fig_kbps_csv.to_html(full_html=False, include_plotlyjs='cdn'))
+#             f.write(fig_pps.to_html(full_html=False, include_plotlyjs='cdn'))
+            f.write(fig_pps_csv.to_html(full_html=False, include_plotlyjs='cdn'))
+            f.write(fig_losses.to_html(full_html=False, include_plotlyjs='cdn'))
+            f.write(fig_interarrival_std.to_html(full_html=False, include_plotlyjs='cdn'))
+#             f.write(fig_interarrival_min.to_html(full_html=False, include_plotlyjs='cdn'))
+#             f.write(fig_interarrival_max.to_html(full_html=False, include_plotlyjs='cdn'))
+            f.write(fig_interarrival_min_csv.to_html(full_html=False, include_plotlyjs='cdn'))
+            f.write(fig_interarrival_max_csv.to_html(full_html=False, include_plotlyjs='cdn'))
+            if software == "webex":
+                f.write(fig_rtp_marker_sum.to_html(full_html=False, include_plotlyjs='cdn'))
+
+
+        print("Did the main graphs successfully")
+
+    
         #Plot the single graphs
-        for key1 in dict_flow_df.keys():
+        for key1 in flows:
             
             csrc1 = dict_flow_df[key1]["rtp_csrc"].iloc[0]
             label1 = flow_label[key1]

@@ -161,12 +161,12 @@ def webrtc_log_parse(log):
             df = df.dropna(subset=['ssrc'])
 
             if ("video" in df["kind"].unique()) and ("frameWidth" not in df.columns):
-                print("Removing flow, no resolution info: ", obj)
+#                 print("Removing flow, no resolution info: ", obj)
                 continue
 
             if "frameWidth" in df.columns:
                 offset = df["frameWidth"].isna().sum() / len(df)
-                print(obj, offset)
+#                 print(obj, offset)
                 if offset < 0.99:
                     df["frameWidth"] = df["frameWidth"].fillna(method="ffill").fillna(method="bfill")
                     df["frameHeight"] = df["frameHeight"].fillna(method="ffill").fillna(method="bfill")
@@ -177,7 +177,7 @@ def webrtc_log_parse(log):
     #        df = df[df["pps"] != -1]
             df = df[~df["pps"].isin([0, -1])]
             if len(df) <= 10:
-                print("Removing flow, less than 10 samples: ", obj)
+#                 print("Removing flow, less than 10 samples: ", obj)
                 continue
 
             #Set label
