@@ -182,14 +182,18 @@ def webrtc_log_parse(log):
 
             #Set label
             df["label"] = df["kind"]
-            if "frameWidth" in df.columns:
-                resolutions = df["frameWidth"].unique()
+            if "frameHeight" in df.columns:
+                resolutions = df["frameHeight"].unique()
                 for res in resolutions:
-                    fps_series = df.loc[(df["frameWidth"] == res) & \
+                    fps_series = df.loc[(df["frameHeight"] == res) & \
                                          (df["fps"] != 0) \
                                          ]["fps"]
-                    if (fps_series.mean() <= 6) and (fps_series.max() <= 10):
-                        df.loc[(df["frameWidth"] == res), "label"] = "screenshare"
+#                     if (fps_series.mean() <= 6) and (fps_series.max() <= 10):
+                    if res > 721:
+                        fps_mean = fps_series.mean()
+                        if fps_mean >= 6:
+                            print("FPS mean nonzero higher than 6, ", fps_mean ," flow: ", df["ssrc_hex"].iloc[0])
+                        df.loc[(df["frameHeight"] == res), "label"] = "screenshare"
 
             stream_to_df[obj] = df
 
