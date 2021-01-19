@@ -14,6 +14,7 @@ from SeriesStats import *
 from LogWebexManager import *
 from LogJitsiManager import webrtc_log_parse, JitsiLogdf
 from scipy.stats import kurtosis, skew, moment
+import pickle
 
 import json
 
@@ -77,7 +78,7 @@ def OtherDataset(dict_flow_data, pcap_path, name, label, time_aggregation):
 def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, file_log, time_aggregation, loss_rate=0.2):
     try:
         df_train = pd.DataFrame()
-        if file_log: #@@
+        if file_log:
             dict_flow_data, dict_flow_data_2 = common(dict_flow_data, time_aggregation, {}, name)
             #Gestione del LOG
             #Make fec_dict: fec_key: list of keys of all streams with the same csi
@@ -89,14 +90,28 @@ def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, fi
             #ha i dati di dal log per ogni flusso non-FEC
             #per i flussi FEC ha empty DataFrame
             d_log = make_d_log(log, dict_flow_data, loss_rate=loss_rate)
+            
+            import pickle
+            with open("d_log.pickle", "wb+") as f:
+                pickle.dump(d_log, f)
+            with open("dict_flow_data_2.pickle", "wb+") as f:
+                pickle.dump(dict_flow_data_2, f)
+            
+            for key, df in d_log.items():
+                if "timestamps" in df.columns:
+                    d_log[key] = df.set_index("timestamps").resample(f"{time_aggregation}L").ffill()
+                    d_log[key].reset_index(inplace=True)
+                    
+            
             #Merge dei dati del log e dict_flow_data_2
             dict_merge, flows_not_in_log = DictMerge(dict_flow_data_2, d_log, fec_dict)
             #Per rendere il codice operabile con json2stat
             df_train = WebLogdf(dict_merge, name)
             return df_train
         else:
+            #Se non abbiamo il log
             dict_flow_data,dict_flow_data_2=common(dict_flow_data, time_aggregation, {}, name, etichetto="etichetto",screen=screen, quality=quality, software=software)
-            dataset_dropped=pd.concat([dict_flow_data_2[key] for key in dict_flow_data_2])
+            dataset_dropped = pd.concat([dict_flow_data_2[key] for key in dict_flow_data_2])
             dataset_dropped.dropna()
             dataset_dropped.reset_index(inplace = True, drop = True)
             return dataset_dropped
@@ -133,6 +148,12 @@ def JitsiDataset(dict_flow_data, pcap_path, name, screen , quality, software, fi
             dict_merge[key] = a_new.join(b, how="inner")
         #this returns to json2stat, it's dataset_dropped
         df_train = JitsiLogdf(dict_merge, name)
+        df_train.reset_index(drop=False, inplace=True)
+        
+        import pickle
+        with open("df_train.pickle", "wb+") as f:
+            pickle.dump(df_train, f)
+
         return df_train
 
     except Exception as e:
