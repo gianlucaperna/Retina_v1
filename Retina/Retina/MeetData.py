@@ -128,8 +128,9 @@ def JitsiDataset(dict_flow_data, pcap_path, name, screen , quality, software, fi
         dict_merge = {}
         for key in d_log:
             a = d_log[key]
+            a_new = a.resample(f"{time_aggregation}L").ffill()
             b = dict_flow_data_2[key].set_index("timestamps")
-            dict_merge[key] = a.join(b, how="inner")
+            dict_merge[key] = a_new.join(b, how="inner")
         #this returns to json2stat, it's dataset_dropped
         df_train = JitsiLogdf(dict_merge, name)
         return df_train

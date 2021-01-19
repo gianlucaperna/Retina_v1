@@ -220,7 +220,7 @@ def JitsiLogdf(dict_merge, pcap_name):
                         'direction', 'ssrc', 'kind', 'trackId', 'packetsReceived', 'fecPacketsDiscarded',
                         'jitter', 'totalSamplesReceived', 'pps', 'codec', 'payloadType',
                         'mimeType', 'clockRate', 'concealmentEvents', 'concealment_diff',
-                        'jitter2', 'framesReceived', 'packetsSent', 'framesSent'] #'frameWidth', 'frameHeight', 'fps',
+                        'jitter2', 'framesReceived', 'packetsSent', 'framesSent', 'fps'] #'frameWidth', 'frameHeight', 'fps',
         for key in dict_merge.keys():
             dict_merge[key]["label2"] = dict_merge[key]["label"].map(dict_label)
             dict_merge[key].loc[:, "flow"] = str(key) #aggiungo nome flusso al dataset
@@ -264,9 +264,9 @@ def JitsiLogdf(dict_merge, pcap_name):
                         (dict_merge[key]["label"] == "audio"), \
                         "label"
                         ] = 0
-                dict_merge[key]=dict_merge[key][dict_merge[key]["label"] == 0].assign(**{'frameWidth':-1, 'frameHeight':-1, 'fps':-1})#new
+                dict_merge[key]=dict_merge[key][dict_merge[key]["label"] == 0].assign(**{'frameWidth':-1, 'frameHeight':-1})#new
                 #print(dict_merge[key]["frameWidth"])
-            dict_merge[key].fillna({'frameWidth':-1, 'frameHeight':-1, 'fps':-1}, inplace=True)
+            dict_merge[key].fillna({'frameWidth':-1, 'frameHeight':-1}, inplace=True)
             train = dict_merge[key].drop(columns_drop, axis = 1, errors = 'ignore')
             train = train.loc[train["label"] != -1]
             df_train = pd.concat([df_train, train])
