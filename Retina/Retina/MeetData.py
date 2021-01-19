@@ -46,12 +46,12 @@ def common(dict_flow_data, time_aggregation, dict_params_stats, pcap,etichetto=N
                                                                  }
         params.update(dict_params_stats)
         for flow_id in dict_flow_data.keys():
-               dict_flow_data[flow_id]["timestamps"] = pd.to_datetime(dict_flow_data[flow_id]["timestamps"], unit = 's')
-               dict_flow_data[flow_id].set_index('timestamps', inplace = True)
-               dict_flow_data[flow_id] = dict_flow_data[flow_id].dropna()
-               dict_flow_data_2[flow_id] = dict_flow_data[flow_id].resample(f"{time_aggregation}s").agg(params)
-               dict_flow_data_2[flow_id]["flow"]=str(flow_id)
-               dict_flow_data_2[flow_id]["pcap"]=str(pcap)
+            dict_flow_data[flow_id]["timestamps"] = pd.to_datetime(dict_flow_data[flow_id]["timestamps"], unit = 's')
+            dict_flow_data[flow_id].set_index('timestamps', inplace = True)
+            dict_flow_data[flow_id] = dict_flow_data[flow_id].dropna() 
+            dict_flow_data_2[flow_id] = dict_flow_data[flow_id].resample(f"{time_aggregation}L").agg(params)
+            dict_flow_data_2[flow_id]["flow"]=str(flow_id)
+            dict_flow_data_2[flow_id]["pcap"]=str(pcap)
 
         for flow_id in dict_flow_data_2.keys():
             dict_flow_data_2[flow_id].reset_index(inplace = True, drop = False)

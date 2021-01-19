@@ -220,8 +220,7 @@ def JitsiLogdf(dict_merge, pcap_name):
                         'direction', 'ssrc', 'kind', 'trackId', 'packetsReceived', 'fecPacketsDiscarded',
                         'jitter', 'totalSamplesReceived', 'pps', 'codec', 'payloadType',
                         'mimeType', 'clockRate', 'concealmentEvents', 'concealment_diff',
-                        'jitter2', 'framesReceived', 'frameWidth', 'frameHeight', 'fps',
-                        'packetsSent', 'framesSent']
+                        'jitter2', 'framesReceived', 'packetsSent', 'framesSent'] #'frameWidth', 'frameHeight', 'fps',
         for key in dict_merge.keys():
             dict_merge[key]["label2"] = dict_merge[key]["label"].map(dict_label)
             dict_merge[key].loc[:, "flow"] = str(key) #aggiungo nome flusso al dataset
@@ -265,13 +264,16 @@ def JitsiLogdf(dict_merge, pcap_name):
                         (dict_merge[key]["label"] == "audio"), \
                         "label"
                         ] = 0
-
-
+                dict_merge[key]=dict_merge[key][dict_merge[key]["label"] == 0].assign(**{'frameWidth':-1, 'frameHeight':-1, 'fps':-1})#new
+                #print(dict_merge[key]["frameWidth"])
+            dict_merge[key].fillna({'frameWidth':-1, 'frameHeight':-1, 'fps':-1}, inplace=True)
             train = dict_merge[key].drop(columns_drop, axis = 1, errors = 'ignore')
             train = train.loc[train["label"] != -1]
             df_train = pd.concat([df_train, train])
         #Attenti con questo drop!
         df_train = df_train.dropna()
+        #df_train.to_csv(f"~/shared/Stadia_catture/aha_{pcap_name}.csv")
+        #print(df_train[df_train["label"]==0]["frameWidth"].value_counts())
         return df_train
     except Exception as e:
         print('Log jitsi: Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)

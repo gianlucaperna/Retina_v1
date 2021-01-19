@@ -6,6 +6,7 @@ Created on Wed May  6 17:17:04 2020
 """
 import pandas as pd
 import sys
+from SeriesStats import packet_loss
 
 OUTDIR = "logs"
 INTERNAL_MASK = "192.168."
@@ -19,7 +20,9 @@ def compute_stats(data, flow_id, file):
         bitrate = data["len_frame"].sum() / (data["timestamps"].max() - data["timestamps"].min()) * 8
 
         data["time_sec"] = data["timestamps"].astype("int")
+        tempo = list(data.time_sec.unique())
         rates = (data.groupby("time_sec")["len_frame"].sum()*8)
+        packetloss=data.groupby("time_sec")["rtp_seq_num"].apply(packet_loss)
         if INTERNAL_MASK in flow_id[2]:
             direction = "S"
         elif INTERNAL_MASK in flow_id[1]:
@@ -42,7 +45,9 @@ def compute_stats(data, flow_id, file):
                             "c_port" : flow_id[4],
                             "s_port" : flow_id[3],
                             "channel" : f"{flow_id[0]}_{flow_id[5]}",
-                            "file" : file
+                            "file" : file,
+                            "timestamps" : ":".join([ str(v) for v in tempo ]),
+                            "packet_loss": ":".join([ str(v) for v in packetloss.values ]),
         })
 
         if len(data["len_frame"]) >= MIN_PKT and \

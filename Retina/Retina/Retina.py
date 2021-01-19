@@ -86,7 +86,7 @@ if __name__ == "__main__":
     parser.add_argument ("-lr", "--loss_rate", help = "Set to drop flow with geq loss_rate (default 0.2)", type=float\
 						,default = 0.2)
     #aggiungere parametro per tempo aggregazione
-
+    console.print("!!!!! Time Aggregation is in milliseconds !!!!! ")
     args = parser.parse_args()
     directory_p = args.directory
     pcap_app = recursive_files(directory_p)
