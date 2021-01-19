@@ -91,12 +91,6 @@ def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, fi
             #per i flussi FEC ha empty DataFrame
             d_log = make_d_log(log, dict_flow_data, loss_rate=loss_rate)
             
-            import pickle
-            with open("d_log.pickle", "wb+") as f:
-                pickle.dump(d_log, f)
-            with open("dict_flow_data_2.pickle", "wb+") as f:
-                pickle.dump(dict_flow_data_2, f)
-            
             for key, df in d_log.items():
                 if "timestamps" in df.columns:
                     d_log[key] = df.set_index("timestamps").resample(f"{time_aggregation}L").ffill()
@@ -149,10 +143,6 @@ def JitsiDataset(dict_flow_data, pcap_path, name, screen , quality, software, fi
         #this returns to json2stat, it's dataset_dropped
         df_train = JitsiLogdf(dict_merge, name)
         df_train.reset_index(drop=False, inplace=True)
-        
-        import pickle
-        with open("df_train.pickle", "wb+") as f:
-            pickle.dump(df_train, f)
 
         return df_train
 
