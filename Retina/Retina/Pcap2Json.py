@@ -69,7 +69,7 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
         #start = time.time()        
         o,e= subprocess.Popen(command, encoding = 'utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE ,shell=True).communicate()
         #end = time.time()
-        print(f"Tshark time per name: {end - start}")
+        #print(f"Tshark time per name: {end - start}")
         r = o.split("\n")
         name_col = r.pop(0)
         name_col = [e for e in name_col.split("?") if e not in ('ipv6.dst','ipv6.src')]
