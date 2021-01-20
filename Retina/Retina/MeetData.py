@@ -15,7 +15,7 @@ from LogWebexManager import *
 from LogJitsiManager import webrtc_log_parse, JitsiLogdf
 from scipy.stats import kurtosis, skew, moment
 import pickle
-
+#import time
 import json
 
 
@@ -26,6 +26,7 @@ def moment4(series):
 
 def common(dict_flow_data, time_aggregation, dict_params_stats, pcap,etichetto=None, label=None, name=None, screen=None, quality=None, software=None):
     try:
+        #start=time.time()
         LEN_DROP = 0
        # start = len(dict_flow_data.keys())
         dict_flow_data, LEN_DROP = inter_statistic (dict_flow_data, LEN_DROP)
@@ -58,6 +59,7 @@ def common(dict_flow_data, time_aggregation, dict_params_stats, pcap,etichetto=N
             dict_flow_data_2[flow_id].reset_index(inplace = True, drop = False)
             new_header = [h[0] + "_" + h[1] if h[1] else h[0] for h in dict_flow_data_2[flow_id]]
             dict_flow_data_2[flow_id].columns = new_header
+        #print(f"common time:{time.time()-start}")
     except Exception as e:
         print(f"Errore in common {e}" )
     return dict_flow_data, dict_flow_data_2

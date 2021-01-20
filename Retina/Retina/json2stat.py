@@ -40,12 +40,12 @@ def json2stat (dict_flow_data, pcap_path, name, time_aggregation, screen = None,
             pass
         if software:
             dataset_dropped = dataset_dropped.dropna()
-            dataset_dropped = dataset_dropped.rename(columns={'label2_value_label': 'label2' \
+            dataset_dropped = dataset_dropped.rename(columns={'label2_value_label': 'label2', \
                                     'label_value_label': 'label', \
-                                    'len_udp_kbps': 'kbps', \ 
+                                    'len_udp_kbps': 'kbps', \
                                     'len_udp_count': 'num_packets', \
                                     'rtp_interarrival_std': 'rtp_inter_timestamp_std', \
-                                    'rtp_interarrival_mean': 'rtp_inter_timestamp_mean', \ 
+                                    'rtp_interarrival_mean': 'rtp_inter_timestamp_mean', \
                                     'rtp_interarrival_zeroes_count': 'rtp_inter_timestamp_num_zeros', \
                                     'flow_': 'flow', \
                                     'pcap_': 'pcap', \

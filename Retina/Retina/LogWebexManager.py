@@ -182,10 +182,9 @@ def WebLogdf(dict_merge, pcap_name):
             dict_merge[key].loc[:, "flow"] = str(key)
             dict_merge[key].loc[:, "pcap"] = pcap_name
 
-#             dict_merge[key].loc[:, "res"] = dict_merge[key]["quality"].apply(lambda x: int(x.split("x")[1]))
-            res = dict_merge[key]["quality"].iloc[0].split("x")[1]
-            
+#             dict_merge[key].loc[:, "res"] = dict_merge[key]["quality"].apply(lambda x: int(x.split("x")[1]))    
             if label_text.startswith("SQVideo"):
+                res = int(dict_merge[key]["quality"].iloc[0].split("x")[1])
                 if res < 0:
                     continue
                 #LQ
@@ -195,7 +194,7 @@ def WebLogdf(dict_merge, pcap_name):
                 elif res > 180 and res < 720:
                     dict_merge[key].loc[:, "label"] = 7
                 #HQ
-                elif res >= 720
+                elif res >= 720:
                     dict_merge[key].loc[:, "label"] = 5
                 
             elif label_text.startswith("SQScreen"):
@@ -209,4 +208,7 @@ def WebLogdf(dict_merge, pcap_name):
         return df_train
     except Exception as e:
         print('LogWebex: Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+        import pickle
+        with open("debug_dict_merge_webex.pickle", "wb") as f:
+            pickle.dump(dict_merge,f)
         raise NameError("LogWebex error")

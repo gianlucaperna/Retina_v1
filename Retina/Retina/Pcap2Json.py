@@ -65,7 +65,11 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
                      -e frame.len -e udp.srcport \
                      -e udp.dstport  -e udp.length  -e rtp.p_type -e rtp.ssrc -e rtp.timestamp \
                      -e rtp.seq  -e rtp.marker -e rtp.csrc.item -e ip.src -e ipv6.src -e ip.dst -e ipv6.dst  --enable-heuristic rtp_stun"""
+        #import time
+        #start = time.time()        
         o,e= subprocess.Popen(command, encoding = 'utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE ,shell=True).communicate()
+        #end = time.time()
+        print(f"Tshark time per name: {end - start}")
         r = o.split("\n")
         name_col = r.pop(0)
         name_col = [e for e in name_col.split("?") if e not in ('ipv6.dst','ipv6.src')]
@@ -119,6 +123,7 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
                     general_df=pd.DataFrame.from_dict(general_dict_info, orient='index').reset_index(drop = True)
                     general_df.to_csv(os.path.join(general_log,name+"_gl.csv"))
         # dict list etc sono passate by reference, attenzione!!
+        #print(f"In the middle {time.time()-start}")
         for time_agg in time_aggregation:
             dataset_dropped = json2stat(copy.deepcopy(dict_flow_data), pcap_path, name, time_agg, screen = screen, quality = quality, software = software, file_log = file_log, label=label, loss_rate=loss_rate)
         if plot == "static":
@@ -129,7 +134,8 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
             plot_stuff(plot_path, dict_flow_data, df_unique_flow, dataset_dropped, software)
         else:
             pass
-
+        #end2=time.time()
+        #print(f"General Time per name: {end2 - end} - {end2-start}")
     except Exception as e:
         print('Pcap2Json: Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
         raise NameError("Pcap2Json error")
