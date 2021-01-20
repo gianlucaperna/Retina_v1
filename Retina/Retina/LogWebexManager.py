@@ -171,25 +171,39 @@ def WebLogdf(dict_merge, pcap_name):
                           }
 
         df_train = pd.DataFrame()
-        columns_drop = [ 'time', 'ssrc_hex', 'ssrc_dec', 'fps', 'jitter'] #here there was also quality 
+        columns_drop = [ 'time', 'ssrc_hex', 'ssrc_dec', 'fps', 'jitter'] #here there was also quality
+        
         for key in dict_merge.keys():
+            label_number = dict_label[dict_merge[key]["label"].iloc[0]]
+            label_text = dict_merge[key]["label"].iloc[0]
+            
             dict_merge[key]["label2"] = dict_merge[key]["label"].map(dict_label)
-            for ix in dict_merge[key].index:
-                dict_merge[key].loc[ix, "flow"] = str(key) #aggiungo nome flusso al dataset
-                dict_merge[key].loc[ix, "pcap"] = pcap_name
-                if dict_merge[key].loc[ix,"label"].startswith("SQVideo"):
-                    quality = min([int(i) for i in dict_merge[key].loc[ix,"quality"].split("x")]) # 180, 320 o 720
-                    #dict_merge[key].loc[ix,"real_quality"] = 
-                    if quality<=180: #LQ
-                        dict_merge[key].loc[ix,"label"] = 6
-                    elif quality>180 and quality<720: #MQ
-                        dict_merge[key].loc[ix,"label"] = 7
-                    else: #HQ
-                        dict_merge[key].loc[ix,"label"] = 5
-                elif dict_merge[key].loc[ix,"label"].startswith("SQScreen"):
-                        dict_merge[key].loc[ix,"label"] = 3
-                else:
-                    dict_merge[key].loc[ix,"label"] = dict_label[dict_merge[key].loc[ix,"label"]]
+
+            dict_merge[key].loc[:, "flow"] = str(key)
+            dict_merge[key].loc[:, "pcap"] = pcap_name
+
+#             dict_merge[key].loc[:, "res"] = dict_merge[key]["quality"].apply(lambda x: int(x.split("x")[1]))
+            res = dict_merge[key]["quality"].iloc[0].split("x")[1]
+            
+            if label_text.startswith("SQVideo"):
+                if res < 0:
+                    continue
+                #LQ
+                if res > 0 and res <= 180:
+                    dict_merge[key].loc[:, "label"] = 6
+                #MQ
+                elif res > 180 and res < 720:
+                    dict_merge[key].loc[:, "label"] = 7
+                #HQ
+                elif res >= 720
+                    dict_merge[key].loc[:, "label"] = 5
+                
+            elif label_text.startswith("SQScreen"):
+                dict_merge[key].loc[:, "label"] = 3
+            
+            else:
+                dict_merge[key].loc[:, "label"] = label_number
+
             train = dict_merge[key].drop(columns_drop, axis = 1, errors = 'ignore')
             df_train = pd.concat([df_train, train])  
         return df_train

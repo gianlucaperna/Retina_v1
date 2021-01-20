@@ -170,11 +170,11 @@ def webrtc_log_parse(log):
                 if offset < 0.99:
                     df["frameWidth"] = df["frameWidth"].fillna(method="ffill").fillna(method="bfill")
                     df["frameHeight"] = df["frameHeight"].fillna(method="ffill").fillna(method="bfill")
-                else:
-                    print("Noticed a high percentage of missing values for resolution for flow: ", df["ssrc_hex"].iloc[0])
+#                 else:
+#                     print("Noticed a high percentage of missing values for resolution for flow: ", df["ssrc_hex"].iloc[0])
 
             df = df.fillna(-1)
-    #        df = df[df["pps"] != -1]
+            #Filter flows that do not send packets
             df = df[~df["pps"].isin([0, -1])]
             if len(df) <= 10:
 #                 print("Removing flow, less than 10 samples: ", obj)

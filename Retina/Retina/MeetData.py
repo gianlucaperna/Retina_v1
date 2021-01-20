@@ -93,7 +93,7 @@ def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, fi
             
             for key, df in d_log.items():
                 if "timestamps" in df.columns:
-                    d_log[key] = df.set_index("timestamps").resample(f"{time_aggregation}L").ffill()
+                    d_log[key] = df.set_index("timestamps").resample(f"{time_aggregation}L").ffill().bfill()
                     d_log[key].reset_index(inplace=True)
                     
             
