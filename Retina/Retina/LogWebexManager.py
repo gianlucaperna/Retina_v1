@@ -105,7 +105,9 @@ def make_d_log(log, dict_flow_data, loss_rate=0.2):
             if not value.empty:
                 value["timestamps"] = value["time"].apply(parser.parse).apply(dt.strftime, args =(("%Y-%m-%dT%H:%M:%S"),))
                 value["timestamps"] = pd.to_datetime(value["timestamps"])
-
+                d_log[key]=value.groupby("timestamps").max().reset_index()
+        #A VOLTE CAPITA DI AVERE PIù INFO PER LO STESSO SECONDO, PERCHè CAMBIANO I MILLISECONDS. PRENDIAMO SOLO L'ULTIMA INFO DISPONIBILE
+        
         return d_log
     except Exception as e:
         print('make_d_log: Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
@@ -146,7 +148,10 @@ def DictMerge(dict_flow_data_2, d_log, fec_dict):
                             break
             else:
                 flows_not_in_log.append(key)
-
+            try:
+                dict_merge[key].dropna(inplace=True)
+            except:
+                pass
         #if no intersection between log data and wireshark data, delete stream (very rare cases)
         #delete empty values of dict_merge - maybe not necessary
         to_delete = [key for key,value in dict_merge.items() if not len(value["label"])]
@@ -174,41 +179,42 @@ def WebLogdf(dict_merge, pcap_name):
         columns_drop = [ 'time', 'ssrc_hex', 'ssrc_dec', 'fps', 'jitter'] #here there was also quality
         
         for key in dict_merge.keys():
-            label_number = dict_label[dict_merge[key]["label"].iloc[0]]
-            label_text = dict_merge[key]["label"].iloc[0]
-            
-            dict_merge[key]["label2"] = dict_merge[key]["label"].map(dict_label)
+            try:
+                leng=len(dict_merge[key])//2
+                label_number = dict_label[dict_merge[key]["label"].iloc[leng]]
+                label_text = dict_merge[key]["label"].iloc[leng]
 
-            dict_merge[key].loc[:, "flow"] = str(key)
-            dict_merge[key].loc[:, "pcap"] = pcap_name
+                dict_merge[key]["label2"] = dict_merge[key]["label"].map(dict_label)
 
-#             dict_merge[key].loc[:, "res"] = dict_merge[key]["quality"].apply(lambda x: int(x.split("x")[1]))    
-            if label_text.startswith("SQVideo"):
-                res = int(dict_merge[key]["quality"].iloc[0].split("x")[1])
-                if res < 0:
-                    continue
-                #LQ
-                if res > 0 and res <= 180:
-                    dict_merge[key].loc[:, "label"] = 6
-                #MQ
-                elif res > 180 and res < 720:
-                    dict_merge[key].loc[:, "label"] = 7
-                #HQ
-                elif res >= 720:
-                    dict_merge[key].loc[:, "label"] = 5
-                
-            elif label_text.startswith("SQScreen"):
-                dict_merge[key].loc[:, "label"] = 3
-            
-            else:
-                dict_merge[key].loc[:, "label"] = label_number
+                dict_merge[key].loc[:, "flow"] = str(key)
+                dict_merge[key].loc[:, "pcap"] = pcap_name
 
-            train = dict_merge[key].drop(columns_drop, axis = 1, errors = 'ignore')
-            df_train = pd.concat([df_train, train])  
+    #             dict_merge[key].loc[:, "res"] = dict_merge[key]["quality"].apply(lambda x: int(x.split("x")[1]))    
+                if label_text.startswith("SQVideo"):
+                    res = int(dict_merge[key]["quality"].iloc[leng].split("x")[1])
+                    if res < 0:
+                        continue
+                    #LQ
+                    if res > 0 and res <= 180:
+                        dict_merge[key].loc[:, "label"] = 6
+                    #MQ
+                    elif res > 180 and res < 720:
+                        dict_merge[key].loc[:, "label"] = 7
+                    #HQ
+                    elif res >= 720:
+                        dict_merge[key].loc[:, "label"] = 5
+
+                elif label_text.startswith("SQScreen"):
+                    dict_merge[key].loc[:, "label"] = 3
+
+                else:
+                    dict_merge[key].loc[:, "label"] = label_number
+
+                train = dict_merge[key].drop(columns_drop, axis = 1, errors = 'ignore')
+                df_train = pd.concat([df_train, train])
+            except Exception as e:
+                print('LogWebex Ciclo: Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
         return df_train
     except Exception as e:
         print('LogWebex: Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
-        import pickle
-        with open("debug_dict_merge_webex.pickle", "wb") as f:
-            pickle.dump(dict_merge,f)
         raise NameError("LogWebex error")

@@ -15,7 +15,7 @@ from LogWebexManager import *
 from LogJitsiManager import webrtc_log_parse, JitsiLogdf
 from scipy.stats import kurtosis, skew, moment
 import pickle
-#import time
+import time
 import json
 
 
@@ -26,7 +26,7 @@ def moment4(series):
 
 def common(dict_flow_data, time_aggregation, dict_params_stats, pcap,etichetto=None, label=None, name=None, screen=None, quality=None, software=None):
     try:
-        #start=time.time()
+        start=time.time()
         LEN_DROP = 0
        # start = len(dict_flow_data.keys())
         dict_flow_data, LEN_DROP = inter_statistic (dict_flow_data, LEN_DROP)
@@ -59,7 +59,7 @@ def common(dict_flow_data, time_aggregation, dict_params_stats, pcap,etichetto=N
             dict_flow_data_2[flow_id].reset_index(inplace = True, drop = False)
             new_header = [h[0] + "_" + h[1] if h[1] else h[0] for h in dict_flow_data_2[flow_id]]
             dict_flow_data_2[flow_id].columns = new_header
-        #print(f"common time:{time.time()-start}")
+        print(f"common time:{time.time()-start} pcap:{pcap}")
     except Exception as e:
         print(f"Errore in common {e}" )
     return dict_flow_data, dict_flow_data_2
@@ -79,6 +79,7 @@ def OtherDataset(dict_flow_data, pcap_path, name, label, time_aggregation):
 
 def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, file_log, time_aggregation, loss_rate=0.2):
     try:
+        start=time.time()
         df_train = pd.DataFrame()
         if file_log:
             dict_flow_data, dict_flow_data_2 = common(dict_flow_data, time_aggregation, {}, name)
@@ -95,14 +96,20 @@ def WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, fi
             
             for key, df in d_log.items():
                 if "timestamps" in df.columns:
-                    d_log[key] = df.set_index("timestamps").resample(f"{time_aggregation}L").ffill().bfill()
-                    d_log[key].reset_index(inplace=True)
-                    
-            
+                    #d_log[key] = df.set_index("timestamps").resample(f"{time_aggregation}L").ffill().bfill()
+                    #d_log[key].reset_index(inplace=True)
+                    try:
+                        d_log[key] = df.set_index("timestamps").resample(f"{time_aggregation}L").ffill().bfill()
+                    except Exception as e:
+                        print(f"d_log errore, salvo {e}")
+                        import pickle
+                        with open(f"d_log_errore_{name}_{key}.pickle", "wb") as f:
+                            pickle.dump(d_log,f)
             #Merge dei dati del log e dict_flow_data_2
             dict_merge, flows_not_in_log = DictMerge(dict_flow_data_2, d_log, fec_dict)
             #Per rendere il codice operabile con json2stat
             df_train = WebLogdf(dict_merge, name)
+            print(f"WebexDataset time:{time.time()-start} name: {name}")
             return df_train
         else:
             #Se non abbiamo il log

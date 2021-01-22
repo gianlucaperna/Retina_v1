@@ -65,15 +65,14 @@ def pcap_to_json(tuple_param): #source_pcap, used_port
                      -e frame.len -e udp.srcport \
                      -e udp.dstport  -e udp.length  -e rtp.p_type -e rtp.ssrc -e rtp.timestamp \
                      -e rtp.seq  -e rtp.marker -e rtp.csrc.item -e ip.src -e ipv6.src -e ip.dst -e ipv6.dst  --enable-heuristic rtp_stun"""
-        #import time
-        #start = time.time()        
+        import time
+        start = time.time()        
         o,e= subprocess.Popen(command, encoding = 'utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE ,shell=True).communicate()
-        #end = time.time()
-        #print(f"Tshark time per name: {end - start}")
+        end = time.time()
+        print(f"Tshark time per {name}: {end - start}")
         r = o.split("\n")
         name_col = r.pop(0)
         name_col = [e for e in name_col.split("?") if e not in ('ipv6.dst','ipv6.src')]
-        #rint(f"string len: {len(r)}")
         del(o)
         rr = [x.split("?")[0:12]+ list(filter(None,x.split("?")[12:16])) for x in r if '' not in x.split("?")[0:9]] #devo tenere solo ipv4 o 6 per ogni pacchetto
         del(r)
