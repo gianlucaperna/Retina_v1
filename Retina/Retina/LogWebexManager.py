@@ -121,33 +121,36 @@ def DictMerge(dict_flow_data_2, d_log, fec_dict):
         flows_not_in_log = []
 
         for key in dict_flow_data_2.keys():
-            #Handle normal streams
-            if not d_log[key].empty:
-                dict_merge[key] = pd.merge( dict_flow_data_2[key], d_log[key], left_on = 'timestamps', right_on = 'timestamps', how ='inner')
+            try:
+                #Handle normal streams
+                if not d_log[key].empty:
+                    dict_merge[key] = pd.merge( dict_flow_data_2[key], d_log[key], left_on = 'timestamps', right_on = 'timestamps', how ='inner')
 
-            #Handle FEC streams
-            elif key in fec_dict.keys():
-                #This shouldn't happen, but just for protection
-                if len(fec_dict[key]) == 0:
-                    print("No flow with same groupID: ", key)
+                #Handle FEC streams
+                elif key in fec_dict.keys():
+                    #This shouldn't happen, but just for protection
+                    if len(fec_dict[key]) == 0:
+                        print("No flow with same groupID: ", key)
 
-                elif len(fec_dict[key]) == 1:
-                    dict_merge[key] = pd.merge( dict_flow_data_2[key], d_log[fec_dict[key][0]], left_on = "timestamps", right_on = "timestamps", how = "left" ).fillna(method="ffill").fillna(method="bfill")
-                    if "fps" in dict_merge[key].columns: dict_merge[key].drop(["fps", "jitter"], axis=1, inplace=True)
-                    dict_merge[key]["label"] = dict_merge[key]["label"].apply(lambda x: "FEC-"+x)
+                    elif len(fec_dict[key]) == 1:
+                        dict_merge[key] = pd.merge( dict_flow_data_2[key], d_log[fec_dict[key][0]], left_on = "timestamps", right_on = "timestamps", how = "left" ).fillna(method="ffill").fillna(method="bfill")
+                        if "fps" in dict_merge[key].columns: dict_merge[key].drop(["fps", "jitter"], axis=1, inplace=True)
+                        dict_merge[key]["label"] = dict_merge[key]["label"].apply(lambda x: "FEC-"+x)
+                    else:
+                        for item in fec_dict[key]:
+                            if len(d_log[item]):
+                                dict_merge[key] = dict_flow_data_2[key]
+                                dict_merge[key]["label"] = d_log[item]["label"].iloc[0]
+                                #if video, needs also quality
+                                if "Video" in d_log[item]["label"].iloc[0]:
+                                    dict_merge[key]["quality"] = d_log[item]["quality"].iloc[0]
+                                dict_merge[key]["label"] = dict_merge[key]["label"].apply(lambda x: "FEC-"+x)
+                                #As soon as I found the first good candidate for an associated stream, I fill out dict_merge[key] and break
+                                break
                 else:
-                    for item in fec_dict[key]:
-                        if len(d_log[item]):
-                            dict_merge[key] = dict_flow_data_2[key]
-                            dict_merge[key]["label"] = d_log[item]["label"].iloc[0]
-                            #if video, needs also quality
-                            if "Video" in d_log[item]["label"].iloc[0]:
-                                dict_merge[key]["quality"] = d_log[item]["quality"].iloc[0]
-                            dict_merge[key]["label"] = dict_merge[key]["label"].apply(lambda x: "FEC-"+x)
-                            #As soon as I found the first good candidate for an associated stream, I fill out dict_merge[key] and break
-                            break
-            else:
-                flows_not_in_log.append(key)
+                    flows_not_in_log.append(key)
+            except Exception as e:
+                print('DictMerge: Errore non bloccante on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
             try:
                 dict_merge[key].dropna(inplace=True)
             except:

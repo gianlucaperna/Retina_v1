@@ -42,10 +42,9 @@ def common(dict_flow_data, time_aggregation, dict_params_stats, pcap,etichetto=N
             'len_udp' : ['std', 'mean', 'count', kbps, max_min_diff]+percentili, \
             'interlength_udp' : ['std', 'mean', max_min_diff]+percentili,\
             'rtp_interarrival' : ['std', 'mean', zeroes_count, max_min_diff]+percentili ,\
-            "inter_time_sequence": ['std', 'mean', max_min_diff]+percentili, \
             "rtp_marker" : [sum_check], \
             "rtp_seq_num" : [packet_loss], \
-                                                                 }
+                                                                 } #            "inter_time_sequence": ['std', 'mean', max_min_diff]+percentili, \
         params.update(dict_params_stats)
         for flow_id in dict_flow_data.keys():
             dict_flow_data[flow_id]["timestamps"] = pd.to_datetime(dict_flow_data[flow_id]["timestamps"], unit = 's')
