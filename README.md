@@ -1,5 +1,5 @@
 # Retina
-Real-Time Analyzer
+Real-Time Analyzer, analyze RTP flows of .pcap/.pcapng, creating statistics and plot about them
 
 ## Installazione:
 
