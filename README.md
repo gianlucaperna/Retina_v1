@@ -53,11 +53,12 @@ optional arguments:
 If you want analyze more than one pcap at a time, in -d parameter give the path of the folder in which are stored the pcap.
 e.g python Retina.py -d /path_to_analyze/
 
--path_to_analize
-    pcap1
-    pcap2
-    pcap3 
-    pcapn
+```
+pcap_to_analyze
+|
+|__ pcap1.pcapng
+|__ pcap2.pcapng
+```
     
 Retina is parellel programming oriented, so, if you run the code on multiple pcap the code will uses a maximum of n_core_cpu - 1 to process all the files. You can set this parameter changing n_process in Retina.py file.
 
