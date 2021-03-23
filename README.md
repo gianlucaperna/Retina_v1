@@ -36,7 +36,7 @@ Retina is parellel programming oriented, so, if you run the code on multiple pca
 
 -p is a flag that provide static or dynamic plot. If dynamic is setted, the .html file is generated for each flow find in the pcap, for all pcaps.
 
--dp [s] serves to specify the minimum length of a flow to be considered in the analysis. e.g if -dp 5 is specified, all the flows <5s are dropped.
+-dp [s] specifies the minimum length of a flow to be considered in the analysis. e.g if -dp 5 is specified, all the flows <5s are dropped.
 
 -ta is useful to express time aggregation to use to compute the stats. Is possibile compute stats per different time agg, e.g
 -ta 1000 2000 3000 means compute stats for 1s, 2s and 3s.
