@@ -4,3 +4,5 @@
 /Retina/Retina/pickle/*
 /Retina/Debug/__pycache__/*
 /**/*.pyc
+.idea/
+__pycache__/

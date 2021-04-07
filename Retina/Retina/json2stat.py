@@ -25,7 +25,10 @@ def json2stat (dict_flow_data, pcap_path, name, time_aggregation, screen = None,
         if (software == "webex"):
             file_log=find_log("log", name, file_log)
             dataset_dropped = WebexDataset(dict_flow_data, pcap_path, name, screen , quality, software, file_log, time_aggregation, loss_rate=loss_rate)
-            dataset_dropped["quality"].fillna("other", inplace=True)
+            if "quality" in dataset_dropped.columns:
+                dataset_dropped["quality"].fillna("other", inplace=True)
+            else:
+                dataset_dropped["quality"] = "other"
         elif (software == "jitsi"):
             file_log=find_log("txt", name, file_log)
             dataset_dropped = JitsiDataset(dict_flow_data, pcap_path, name, screen, quality, software, file_log, time_aggregation)
